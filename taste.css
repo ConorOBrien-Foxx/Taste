@@ -1,0 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,700;1,400;1,700&family=Roboto+Mono&display=swap');
+
+html {
+    background: #552255;
+    font-family: "Open Sans", sans-serif;
+}
+
+html, textarea, button {
+    color: #eeafee;
+}
+
+button {
+    background: #331133;
+    border: none;
+    padding: 6px;
+    margin: 6px;
+    font-size: 1.2em;
+    cursor: pointer;
+}
+button:hover {
+    background: #553355;
+}
+
+textarea {
+    background: #331133;
+    border: none;
+    font-family: "Roboto Mono", Consolas, monospace;
+    /* from TIO */
+    box-sizing: border-box;
+    font-size: 16px;
+    outline: none;
+    overflow: hidden;
+    padding: 4px 6px;
+    resize: none;
+    width: 100%;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    margin: 0 6px;
+}
+
+#dummy {
+    height: 8px;
+    opacity: 0;
+}

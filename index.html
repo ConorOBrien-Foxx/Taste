@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Taste</title>
+    <link rel="STYLESHEET" href="taste.css">
+    <script type="text/javascript" src="taste.js"></script>
+</head>
+<body>
+    <div id="ElmApp"></div>
+</body>
+<textarea id="dummy" readonly=""></textarea>
+
+<script type="text/javascript">
+
+const app = Elm.Main.init({
+    node: document.getElementById("ElmApp")
+});
+
+// you CANNOT make me do this in Elm.
+// copied from TIO
+function resize(textArea) {
+	var dummy = document.getElementById("dummy");
+	textArea = this == window ? textArea : this;
+	dummy.style.fontFamily = getComputedStyle(textArea).fontFamily;
+	dummy.style.width = getComputedStyle(textArea).width;
+	dummy.value = textArea.value;
+	textArea.style.height = Math.max(dummy.scrollHeight, textArea.dataset.baseHeight || 27) + "px";
+	dummy.value = "";
+};
+
+for(let ta of document.querySelectorAll("textarea")) {
+    if(ta.id === "dummy") continue;
+    ta.addEventListener("input", resize);
+    resize(ta);
+}
+
+</script>
+</html>

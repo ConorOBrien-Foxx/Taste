@@ -107,5 +107,4 @@ view model =
     , button [ onClick Execute ] [ text "Execute" ]
     , h3 [] [ text "Output" ]
     , textarea [ readonly True, id "output", value model.output ] [ ]
-    -- , div [] [ text (String.reverse model.code) ]
     ]

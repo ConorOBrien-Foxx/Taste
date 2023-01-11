@@ -5181,59 +5181,77 @@ var $elm$browser$Browser$sandbox = function (impl) {
 			view: impl.view
 		});
 };
-var $author$project$Taste$DataLeaf = function (a) {
+var $elm$core$Basics$composeL = F3(
+	function (g, f, x) {
+		return g(
+			f(x));
+	});
+var $author$project$Decode$DataLeaf = function (a) {
 	return {$: 'DataLeaf', a: a};
 };
-var $author$project$Taste$Function = {$: 'Function'};
-var $author$project$Taste$Leaf = function (a) {
+var $author$project$Decode$Function = {$: 'Function'};
+var $author$project$Decode$Leaf = function (a) {
 	return {$: 'Leaf', a: a};
 };
-var $author$project$Taste$One = {$: 'One'};
-var $author$project$Taste$RegX = {$: 'RegX'};
-var $author$project$Taste$RegY = {$: 'RegY'};
-var $author$project$Taste$Tree = function (a) {
+var $author$project$Decode$One = {$: 'One'};
+var $author$project$Decode$RegX = {$: 'RegX'};
+var $author$project$Decode$RegY = {$: 'RegY'};
+var $author$project$Decode$Tree = function (a) {
 	return {$: 'Tree', a: a};
 };
-var $author$project$Taste$UnknownData = {$: 'UnknownData'};
-var $author$project$Taste$Zero = {$: 'Zero'};
-var $author$project$Taste$dataTree = $author$project$Taste$Tree(
+var $author$project$Decode$UnknownData = {$: 'UnknownData'};
+var $author$project$Decode$Zero = {$: 'Zero'};
+var $author$project$Decode$dataTree = $author$project$Decode$Tree(
 	_Utils_Tuple2(
-		$author$project$Taste$Tree(
+		$author$project$Decode$Tree(
 			_Utils_Tuple2(
-				$author$project$Taste$Leaf(
-					$author$project$Taste$DataLeaf($author$project$Taste$RegX)),
-				$author$project$Taste$Leaf(
-					$author$project$Taste$DataLeaf($author$project$Taste$RegY)))),
-		$author$project$Taste$Tree(
+				$author$project$Decode$Leaf(
+					$author$project$Decode$DataLeaf($author$project$Decode$RegX)),
+				$author$project$Decode$Leaf(
+					$author$project$Decode$DataLeaf($author$project$Decode$RegY)))),
+		$author$project$Decode$Tree(
 			_Utils_Tuple2(
-				$author$project$Taste$Leaf(
-					$author$project$Taste$DataLeaf($author$project$Taste$Function)),
-				$author$project$Taste$Tree(
+				$author$project$Decode$Leaf(
+					$author$project$Decode$DataLeaf($author$project$Decode$Function)),
+				$author$project$Decode$Tree(
 					_Utils_Tuple2(
-						$author$project$Taste$Tree(
+						$author$project$Decode$Tree(
 							_Utils_Tuple2(
-								$author$project$Taste$Leaf(
-									$author$project$Taste$DataLeaf($author$project$Taste$Zero)),
-								$author$project$Taste$Leaf(
-									$author$project$Taste$DataLeaf($author$project$Taste$One)))),
-						$author$project$Taste$Leaf(
-							$author$project$Taste$DataLeaf($author$project$Taste$UnknownData))))))));
-var $elm$core$Debug$log = _Debug_log;
-var $elm$core$Tuple$second = function (_v0) {
-	var y = _v0.b;
-	return y;
-};
-var $author$project$Main$debug = F2(
-	function (message, value) {
-		return _Utils_Tuple2(
-			A2($elm$core$Debug$log, 'Debugging:', message),
-			value).b;
-	});
-var $author$project$Taste$OpLeaf = function (a) {
+								$author$project$Decode$Leaf(
+									$author$project$Decode$DataLeaf($author$project$Decode$Zero)),
+								$author$project$Decode$Leaf(
+									$author$project$Decode$DataLeaf($author$project$Decode$One)))),
+						$author$project$Decode$Leaf(
+							$author$project$Decode$DataLeaf($author$project$Decode$UnknownData))))))));
+var $author$project$Decode$Input = {$: 'Input'};
+var $author$project$Decode$OpLeaf = function (a) {
 	return {$: 'OpLeaf', a: a};
 };
-var $author$project$Taste$Terminate = {$: 'Terminate'};
-var $author$project$Taste$arityOf = function (op) {
+var $author$project$Decode$TasteList = {$: 'TasteList'};
+var $author$project$Decode$Terminate = {$: 'Terminate'};
+var $author$project$Decode$TypeLeaf = function (a) {
+	return {$: 'TypeLeaf', a: a};
+};
+var $author$project$Decode$TasteFunction = {$: 'TasteFunction'};
+var $author$project$Decode$TasteNumeric = {$: 'TasteNumeric'};
+var $author$project$Decode$getDataType = F2(
+	function (state, dat) {
+		switch (dat.$) {
+			case 'RegX':
+				return $author$project$Decode$TasteNumeric;
+			case 'RegY':
+				return $author$project$Decode$TasteNumeric;
+			case 'Zero':
+				return $author$project$Decode$TasteNumeric;
+			case 'One':
+				return $author$project$Decode$TasteNumeric;
+			case 'Function':
+				return $author$project$Decode$TasteFunction;
+			default:
+				return $author$project$Decode$TasteNumeric;
+		}
+	});
+var $author$project$Decode$arityOf = function (op) {
 	switch (op.$) {
 		case 'Input':
 			return 0;
@@ -5255,48 +5273,100 @@ var $author$project$Taste$arityOf = function (op) {
 			return 0;
 	}
 };
-var $author$project$Taste$Add = {$: 'Add'};
-var $author$project$Taste$Divide = {$: 'Divide'};
-var $author$project$Taste$Equality = {$: 'Equality'};
-var $author$project$Taste$Input = {$: 'Input'};
-var $author$project$Taste$Modulo = {$: 'Modulo'};
-var $author$project$Taste$Multiply = {$: 'Multiply'};
-var $author$project$Taste$UnknownOp = {$: 'UnknownOp'};
-var $author$project$Taste$opTree = $author$project$Taste$Tree(
+var $author$project$Decode$isDone = F2(
+	function (op, types) {
+		var _v0 = _Utils_Tuple2(op, types);
+		_v0$2:
+		while (true) {
+			if (((_v0.a.$ === 'Input') && _v0.b.b) && (_v0.b.a.$ === 'TasteFunction')) {
+				if (!_v0.b.b.b) {
+					var _v1 = _v0.a;
+					var _v2 = _v0.b;
+					var _v3 = _v2.a;
+					return false;
+				} else {
+					if (!_v0.b.b.b.b) {
+						var _v4 = _v0.a;
+						var _v5 = _v0.b;
+						var _v6 = _v5.a;
+						var _v7 = _v5.b;
+						return true;
+					} else {
+						break _v0$2;
+					}
+				}
+			} else {
+				break _v0$2;
+			}
+		}
+		return _Utils_cmp(
+			$author$project$Decode$arityOf(op),
+			$elm$core$List$length(types)) < 1;
+	});
+var $author$project$Decode$UnknownOp = {$: 'UnknownOp'};
+var $author$project$Decode$newParseState = F2(
+	function (tree, bits) {
+		return {argList: _List_Nil, bits: bits, op: $author$project$Decode$UnknownOp, result: _List_Nil, target: tree, typeArgs: _List_Nil};
+	});
+var $author$project$Decode$Add = {$: 'Add'};
+var $author$project$Decode$Divide = {$: 'Divide'};
+var $author$project$Decode$Equality = {$: 'Equality'};
+var $author$project$Decode$Modulo = {$: 'Modulo'};
+var $author$project$Decode$Multiply = {$: 'Multiply'};
+var $author$project$Decode$opTree = $author$project$Decode$Tree(
 	_Utils_Tuple2(
-		$author$project$Taste$Tree(
+		$author$project$Decode$Tree(
 			_Utils_Tuple2(
-				$author$project$Taste$Leaf(
-					$author$project$Taste$OpLeaf($author$project$Taste$Input)),
-				$author$project$Taste$Tree(
+				$author$project$Decode$Leaf(
+					$author$project$Decode$OpLeaf($author$project$Decode$Input)),
+				$author$project$Decode$Tree(
 					_Utils_Tuple2(
-						$author$project$Taste$Leaf(
-							$author$project$Taste$OpLeaf($author$project$Taste$Add)),
-						$author$project$Taste$Leaf(
-							$author$project$Taste$OpLeaf($author$project$Taste$Terminate)))))),
-		$author$project$Taste$Tree(
+						$author$project$Decode$Leaf(
+							$author$project$Decode$OpLeaf($author$project$Decode$Add)),
+						$author$project$Decode$Leaf(
+							$author$project$Decode$OpLeaf($author$project$Decode$Terminate)))))),
+		$author$project$Decode$Tree(
 			_Utils_Tuple2(
-				$author$project$Taste$Tree(
+				$author$project$Decode$Tree(
 					_Utils_Tuple2(
-						$author$project$Taste$Leaf(
-							$author$project$Taste$OpLeaf($author$project$Taste$Multiply)),
-						$author$project$Taste$Tree(
+						$author$project$Decode$Leaf(
+							$author$project$Decode$OpLeaf($author$project$Decode$Multiply)),
+						$author$project$Decode$Tree(
 							_Utils_Tuple2(
-								$author$project$Taste$Leaf(
-									$author$project$Taste$OpLeaf($author$project$Taste$Divide)),
-								$author$project$Taste$Leaf(
-									$author$project$Taste$OpLeaf($author$project$Taste$UnknownOp)))))),
-				$author$project$Taste$Tree(
+								$author$project$Decode$Leaf(
+									$author$project$Decode$OpLeaf($author$project$Decode$Divide)),
+								$author$project$Decode$Leaf(
+									$author$project$Decode$OpLeaf($author$project$Decode$UnknownOp)))))),
+				$author$project$Decode$Tree(
 					_Utils_Tuple2(
-						$author$project$Taste$Leaf(
-							$author$project$Taste$OpLeaf($author$project$Taste$Modulo)),
-						$author$project$Taste$Tree(
+						$author$project$Decode$Leaf(
+							$author$project$Decode$OpLeaf($author$project$Decode$Modulo)),
+						$author$project$Decode$Tree(
 							_Utils_Tuple2(
-								$author$project$Taste$Leaf(
-									$author$project$Taste$OpLeaf($author$project$Taste$Equality)),
-								$author$project$Taste$Leaf(
-									$author$project$Taste$OpLeaf($author$project$Taste$UnknownOp))))))))));
-var $author$project$Taste$decodeStep = function (state) {
+								$author$project$Decode$Leaf(
+									$author$project$Decode$OpLeaf($author$project$Decode$Equality)),
+								$author$project$Decode$Leaf(
+									$author$project$Decode$OpLeaf($author$project$Decode$UnknownOp))))))))));
+var $elm$core$Tuple$second = function (_v0) {
+	var y = _v0.b;
+	return y;
+};
+var $author$project$Decode$TasteBoolean = {$: 'TasteBoolean'};
+var $author$project$Decode$typeTree = $author$project$Decode$Tree(
+	_Utils_Tuple2(
+		$author$project$Decode$Leaf(
+			$author$project$Decode$TypeLeaf($author$project$Decode$TasteNumeric)),
+		$author$project$Decode$Tree(
+			_Utils_Tuple2(
+				$author$project$Decode$Leaf(
+					$author$project$Decode$TypeLeaf($author$project$Decode$TasteList)),
+				$author$project$Decode$Tree(
+					_Utils_Tuple2(
+						$author$project$Decode$Leaf(
+							$author$project$Decode$TypeLeaf($author$project$Decode$TasteFunction)),
+						$author$project$Decode$Leaf(
+							$author$project$Decode$TypeLeaf($author$project$Decode$TasteBoolean))))))));
+var $author$project$Decode$decodeStep = function (state) {
 	decodeStep:
 	while (true) {
 		var _v0 = state.target;
@@ -5321,41 +5391,43 @@ var $author$project$Taste$decodeStep = function (state) {
 			var leaf = _v0.a;
 			if (_Utils_eq(
 				leaf,
-				$author$project$Taste$OpLeaf($author$project$Taste$Terminate))) {
+				$author$project$Decode$OpLeaf($author$project$Decode$Terminate))) {
 				return state;
 			} else {
-				var nextState = function () {
+				var augmented = function () {
 					switch (leaf.$) {
+						case 'TypeLeaf':
+							return state;
 						case 'OpLeaf':
 							var op = leaf.a;
-							var nextArity = $author$project$Taste$arityOf(op);
 							return _Utils_update(
 								state,
-								{
-									arity: nextArity,
-									target: (!nextArity) ? $author$project$Taste$opTree : $author$project$Taste$dataTree
-								});
-						case 'DataLeaf':
+								{op: op});
+						default:
 							var td = leaf.a;
 							return _Utils_update(
 								state,
 								{
-									arity: state.arity - 1,
-									target: (state.arity === 1) ? $author$project$Taste$opTree : $author$project$Taste$dataTree
+									argList: _Utils_ap(
+										state.argList,
+										_List_fromArray(
+											[
+												A2($author$project$Decode$getDataType, state, td)
+											]))
 								});
-						default:
-							var tasteType = leaf.a;
-							return _Utils_update(
-								state,
-								{target: $author$project$Taste$dataTree});
 					}
 				}();
+				var nextState = A2($author$project$Decode$isDone, augmented.op, augmented.argList) ? _Utils_update(
+					augmented,
+					{argList: _List_Nil, target: $author$project$Decode$opTree, typeArgs: _List_Nil}) : _Utils_update(
+					augmented,
+					{target: $author$project$Decode$dataTree});
 				var $temp$state = function () {
 					if (_Utils_eq(
 						leaf,
-						$author$project$Taste$DataLeaf($author$project$Taste$Function))) {
-						var subStep = $author$project$Taste$decodeStep(
-							{arity: 1, bits: state.bits, result: _List_Nil, target: $author$project$Taste$dataTree});
+						$author$project$Decode$DataLeaf($author$project$Decode$Function))) {
+						var subStep = $author$project$Decode$decodeStep(
+							A2($author$project$Decode$newParseState, $author$project$Decode$dataTree, state.bits));
 						return _Utils_update(
 							nextState,
 							{
@@ -5369,18 +5441,38 @@ var $author$project$Taste$decodeStep = function (state) {
 											subStep.result,
 											_List_fromArray(
 												[
-													$author$project$Taste$OpLeaf($author$project$Taste$Terminate)
+													$author$project$Decode$OpLeaf($author$project$Decode$Terminate)
 												]))))
 							});
 					} else {
-						return _Utils_update(
-							nextState,
-							{
-								result: _Utils_ap(
-									nextState.result,
-									_List_fromArray(
-										[leaf]))
-							});
+						if (_Utils_eq(
+							leaf,
+							$author$project$Decode$OpLeaf($author$project$Decode$Input)) || _Utils_eq(
+							leaf,
+							$author$project$Decode$TypeLeaf($author$project$Decode$TasteList))) {
+							var subStep = $author$project$Decode$decodeStep(
+								A2($author$project$Decode$newParseState, $author$project$Decode$typeTree, state.bits));
+							return _Utils_update(
+								nextState,
+								{
+									bits: subStep.bits,
+									result: _Utils_ap(
+										nextState.result,
+										_Utils_ap(
+											_List_fromArray(
+												[leaf]),
+											subStep.result))
+								});
+						} else {
+							return _Utils_update(
+								nextState,
+								{
+									result: _Utils_ap(
+										nextState.result,
+										_List_fromArray(
+											[leaf]))
+								});
+						}
 					}
 				}();
 				state = $temp$state;
@@ -5389,6 +5481,65 @@ var $author$project$Taste$decodeStep = function (state) {
 		}
 	}
 };
+var $author$project$Decode$decode = function (bits) {
+	return $author$project$Decode$decodeStep(
+		A2($author$project$Decode$newParseState, $author$project$Decode$dataTree, bits)).result;
+};
+var $elm$core$List$filter = F2(
+	function (isGood, list) {
+		return A3(
+			$elm$core$List$foldr,
+			F2(
+				function (x, xs) {
+					return isGood(x) ? A2($elm$core$List$cons, x, xs) : xs;
+				}),
+			_List_Nil,
+			list);
+	});
+var $elm$core$String$cons = _String_cons;
+var $elm$core$String$fromChar = function (_char) {
+	return A2($elm$core$String$cons, _char, '');
+};
+var $elm$core$String$foldr = _String_foldr;
+var $elm$core$String$toList = function (string) {
+	return A3($elm$core$String$foldr, $elm$core$List$cons, _List_Nil, string);
+};
+var $elm$core$Debug$toString = _Debug_toString;
+var $elm$core$Maybe$withDefault = F2(
+	function (_default, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return value;
+		} else {
+			return _default;
+		}
+	});
+var $author$project$Evaluate$evaluate = F2(
+	function (code, input) {
+		return A2(
+			$elm$core$String$join,
+			'\n',
+			A2(
+				$elm$core$List$map,
+				$elm$core$Debug$toString,
+				$author$project$Decode$decode(
+					A2(
+						$elm$core$List$map,
+						A2(
+							$elm$core$Basics$composeL,
+							$elm$core$Maybe$withDefault(0),
+							$elm$core$String$toInt),
+						A2(
+							$elm$core$List$filter,
+							function (x) {
+								return (x === '0') || (x === '1');
+							},
+							A2(
+								$elm$core$List$map,
+								$elm$core$String$fromChar,
+								$elm$core$String$toList(code)))))));
+	});
+var $author$project$Taste$evaluate = $author$project$Evaluate$evaluate;
 var $author$project$Main$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
@@ -5403,17 +5554,11 @@ var $author$project$Main$update = F2(
 					model,
 					{input: newInput});
 			default:
-				return A2(
-					$author$project$Main$debug,
-					$author$project$Taste$decodeStep(
-						{
-							arity: 1,
-							bits: _List_fromArray(
-								[0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0]),
-							result: _List_Nil,
-							target: $author$project$Taste$dataTree
-						}),
-					model);
+				return _Utils_update(
+					model,
+					{
+						output: A2($author$project$Taste$evaluate, model.code, model.input)
+					});
 		}
 	});
 var $author$project$Main$ChangeInput = function (a) {

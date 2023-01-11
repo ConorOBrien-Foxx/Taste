@@ -53,47 +53,7 @@ update msg model =
       { model | input = newInput }
     
     Execute ->
-      debug ( Taste.decodeStep {
-            arity = 1, target = Taste.dataTree, result = [],
-            bits =
-            [ 0, 0 -- RegX
-            , 1, 0, 0 -- Multiply/Fold
-            , 1, 0 -- Function
-            , 0, 0 -- RegX
-            , 0, 1, 0 -- Add
-            , 0, 1 -- RegY
-            , 0, 1, 1 -- Terminate
-            , 0, 1, 0 -- Add (discarded)
-            ]
-            }
-            {-
-            [ 0, 0 -- RegX
-            , 1, 0, 0 -- Multiply
-            , 1, 1, 0, 0 -- 0
-            ]
-            -}
-            -- [ 0, 0 -- RegX
-            -- , 0, 0,  1,  0, 0  -- Input list number
-            -- , 0, 1, 0 -- Range
-            -- ]
-            -- [ 0, 0 -- RegX
-            -- , 1, 1, 0 -- Modulo
-            -- , 1, 1, 0, 1 -- One
-            -- , 0, 1, 1 -- Terminate
-            -- , 0, 1, 1 -- Terminate
-            -- , 1, 1, 0 -- Modulo
-            -- , 0, 1 -- RegX
-            -- ]
-            -- [ 0, 0 -- RegX
-            -- , 1, 0, 1, 0 -- Divide
-            -- , 0, 1 -- RegY
-            -- , 1, 1, 0, 1 -- One
-            -- , 0, 1, 0 -- Add
-            -- , 0, 0 -- RegX
-            -- ]
-        )
-        model
-      -- { model | output = Taste.evaluate model.code model.input }
+      { model | output = Taste.evaluate model.code model.input }
 
 -- VIEW
 view : Model -> Html Msg

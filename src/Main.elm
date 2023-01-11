@@ -25,7 +25,7 @@ type alias Model =
 
 init : Model
 init =
-  { code = "Hello, World!"
+  { code = "x+1*y"
   , input = ""
   , output = ""
   }
@@ -64,7 +64,7 @@ view model =
     , textarea [ id "code", value model.code, onInput CodeChange ] [ ]
     , h3 [] [ text "Input" ]
     , textarea [ id "input", value model.input, onInput ChangeInput ] [ ]
-    , button [ onClick Execute ] [ text "Execute" ]
+    , button [ id "execute", onClick Execute ] [ text "Execute" ]
     , h3 [] [ text "Output" ]
     , textarea [ readonly True, id "output", value model.output ] [ ]
     ]

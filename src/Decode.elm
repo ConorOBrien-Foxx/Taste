@@ -1,40 +1,7 @@
 module Decode exposing (..)
 
--- TYPES
-type TasteData
-  = Zero
-  | One
-  | RegX
-  | RegY
-  | Function
-  | UnknownData
-
-type TasteOperation
-  = Add
-  | Subtract
-  | Multiply
-  | Divide
-  | Modulo
-  | Input
-  | Equality
-  | Terminate
-  | UnknownOp
-
-type TasteType
-  = TasteNumeric
-  | TasteFunction
-  | TasteBoolean
-  | TasteList
-  
--- TREE
-type InstructionLeaf
-  = OpLeaf TasteOperation
-  | DataLeaf TasteData
-  | TypeLeaf TasteType
-
-type CodeTree
-  = Leaf InstructionLeaf
-  | Tree (CodeTree, CodeTree)
+import Types exposing (..)
+import CodeTree exposing (..)
 
 type alias ParseState =
   { target : CodeTree
@@ -60,6 +27,7 @@ arityOf : TasteOperation -> Int
 arityOf op =
   case op of
     Input -> 0
+    Range -> 0
     Add -> 1
     Subtract -> 1
     Multiply -> 1
@@ -164,96 +132,3 @@ decode bits =
   newParseState dataTree bits
   |> decodeStep
   |> .result
-
--- TREE DATA
-typeTree : CodeTree
-typeTree =
-  Tree (
-    --0
-    Leaf (TypeLeaf TasteNumeric),
-    --1
-    Tree (
-      --10
-      Leaf (TypeLeaf TasteList),
-      --11
-      Tree (
-        --110
-        Leaf (TypeLeaf TasteFunction),
-        --111
-        Leaf (TypeLeaf TasteBoolean)
-      )
-    )
-  )
-
-opTree : CodeTree
-opTree =
-  Tree (
-    --0
-    Tree (
-      --00
-      Leaf (OpLeaf Input),
-      --01
-      Tree (
-        --010
-        Leaf (OpLeaf Add),
-        --011
-        Leaf (OpLeaf Terminate)
-      )
-    ),
-    --1
-    Tree (
-      --10
-      Tree (
-        --100
-        Leaf (OpLeaf Multiply),
-        --101
-        Tree (
-          --1010
-          Leaf (OpLeaf Divide),
-          --1011
-          Leaf (OpLeaf UnknownOp)
-        )
-      ),
-      --11
-      Tree (
-        --110
-        Leaf (OpLeaf Modulo),
-        --111
-        Tree (
-          --1110
-          Leaf (OpLeaf Equality),
-          --1111
-          Leaf (OpLeaf UnknownOp)
-        )
-      )
-    )
-  )
-
-dataTree : CodeTree
-dataTree =
-  Tree (
-    --0
-    Tree (
-      --00
-      Leaf (DataLeaf RegX),
-      --01
-      Leaf (DataLeaf RegY)
-    ),
-    --1
-    Tree (
-      --10
-      Leaf (DataLeaf Function),
-      --11
-      Tree (
-        --110
-        Tree (
-          --1100
-          Leaf (DataLeaf Zero),
-          --1101
-          Leaf (DataLeaf One)
-        ),
-        --111
-        Leaf (DataLeaf UnknownData)
-      )
-    )
-  )

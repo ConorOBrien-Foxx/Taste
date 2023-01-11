@@ -56,7 +56,6 @@ Operators (Variadic)
 010     integer integer -> add
         list function -> map
 011     terminate function
-011     integer -> range
 100     integer integer -> multiply
         list function -> fold
 101     integer integer -> divide

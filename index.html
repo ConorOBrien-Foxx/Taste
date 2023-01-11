@@ -29,11 +29,24 @@ function resize(textArea) {
 	dummy.value = "";
 };
 
-for(let ta of document.querySelectorAll("textarea")) {
+let textAreas = document.querySelectorAll("textarea")
+for(let ta of textAreas) {
     if(ta.id === "dummy") continue;
     ta.addEventListener("input", resize);
     resize(ta);
 }
+
+const execute = document.getElementById("execute");
+const output = document.getElementById("output");
+execute.addEventListener("click", function () {
+    setTimeout(() => resize(output), 0);
+});
+
+window.addEventListener("resize", () => {
+    for(let ta of textAreas) {
+        resize(ta);
+    }
+});
 
 </script>
 </html>

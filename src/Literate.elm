@@ -2,22 +2,42 @@ module Literate exposing (..)
 
 import Atom exposing (..)
 import Decode exposing (..)
+import Types exposing (..)
 
 type alias Token =
   { raw : String
-  , op : TasteOperation
+  , ins : InstructionLeaf
   }
 
-getOperation : String -> TasteOperation
-getOperation op =
+getInstruction : String -> InstructionLeaf
+getInstruction op =
   case op of
-    "+" -> Add
-    "-" -> Subtract
-    _ -> UnknownOp
+    "0" -> DataLeaf Zero
+    "1" -> DataLeaf One
+    -- TODO: more constants
+    "x" -> DataLeaf RegX
+    "y" -> DataLeaf RegY
+    "{" -> DataLeaf Function
+    "r" -> OpLeaf Range
+    "+" -> OpLeaf Add
+    "-" -> OpLeaf Subtract
+    "/" -> OpLeaf Divide
+    "*" -> OpLeaf Multiply
+    "%" -> OpLeaf Modulo
+    "i" -> OpLeaf Input
+    "=" -> OpLeaf Equality
+    "}" -> OpLeaf Terminate
+    "N" -> TypeLeaf TasteNumeric
+    "B" -> TypeLeaf TasteBoolean
+    "F" -> TypeLeaf TasteFunction
+    "L" -> TypeLeaf TasteList
+    
+    _ -> OpLeaf UnknownOp
 
 tokenize : String -> List Token
 tokenize code =
   code
     |> String.toList
     |> List.map String.fromChar
-    |> List.map (\x -> { raw = x, op = getOperation x })
+    |> List.map (\x -> { raw = x, ins = getInstruction x })
+    -- |> List.filter (.op == UnknownOp)

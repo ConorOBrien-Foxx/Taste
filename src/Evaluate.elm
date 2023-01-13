@@ -57,6 +57,33 @@ permute leaves =
   permuteHelper { focusOp = Nothing, build = [], leaves = leaves }
   |> .build
 
+
+newStateWithX : TasteState -> Atom -> TasteState
+newStateWithX state x =
+  { stack = [], input = state.input, x = x, y = state.y }
+
+newStateWithXY : TasteState -> Atom -> Atom -> TasteState
+newStateWithXY state x y =
+  { stack = [], input = state.input, x = x, y = y }
+
+atomHead : List Atom -> Atom
+atomHead stack =
+  case stack of
+    [] -> Error "Function evaluated to empty stack"
+    a :: _ -> a
+
+evaluateAt : List InstructionLeaf -> TasteState -> Atom -> Atom
+evaluateAt fn state el =
+  newStateWithX state el |> evaluateToAtom fn
+
+evaluateAt2 : List InstructionLeaf -> TasteState -> Atom -> Atom -> Atom
+evaluateAt2 fn state x y =
+  newStateWithXY state x y |> evaluateToAtom fn
+
+evaluateToAtom : List InstructionLeaf -> TasteState -> Atom
+evaluateToAtom fn = 
+  evaluateStep fn >> .stack >> atomHead
+
 evaluateInstruction : TasteState -> InstructionLeaf -> TasteState
 evaluateInstruction state op =
   case op of
@@ -78,20 +105,9 @@ evaluateInstruction state op =
         TypeInteger b :: TypeInteger a :: rest ->
           [ TypeInteger (a + b) ] ++ rest
         TypeFunction fn :: TypeList v :: rest ->
-          let
-            mapped = List.map
-              (\el ->
-                let
-                  step = evaluateStep fn { stack = [], input = state.input, x = el, y = state.y }
-                in
-                case step.stack of
-                  [] -> Error "Evaluated to empty stack (Map)"
-                  a :: _ -> a
-              )
-              v
-          in
-          [ TypeList mapped ] ++ rest
-        a :: b :: rest -> [ Error "Unrecognized Types (Add)" ] ++ rest
+          let mapped = List.map (evaluateAt fn state) v
+          in [ TypeList mapped ] ++ rest
+        b :: a :: rest -> [ Error "Unrecognized Types (Add)" ] ++ rest
       }
     OpLeaf Multiply ->
       { state
@@ -99,9 +115,24 @@ evaluateInstruction state op =
         [] -> []
         Error a :: rest -> state.stack
         [a] -> [ Error "Insufficient Arguments" ]
-        TypeInteger a :: TypeInteger b :: rest ->
-          [ TypeInteger (b * a) ] ++ rest
-        a :: b :: rest -> [ Error "Unrecognized Types (Multiply)" ] ++ rest
+        TypeInteger b :: TypeInteger a :: rest ->
+          [ TypeInteger (a * b) ] ++ rest
+        b :: a :: rest -> [ Error "Unrecognized Types (Multiply)" ] ++ rest
+      }
+    OpLeaf Divide ->
+      { state
+      | stack = case state.stack of
+        [] -> []
+        Error a :: rest -> state.stack
+        [a] -> [ Error "Insufficient Arguments" ]
+        TypeInteger b :: TypeInteger a :: rest ->
+          -- TODO: Regular float division and auto casting arguments.
+          [ TypeInteger (a // b) ] ++ rest
+        TypeFunction fn :: TypeList v :: rest ->
+          -- TODO: seed
+          let folded = List.foldl (evaluateAt2 fn state) (TypeInteger 0) v
+          in [ folded ] ++ rest
+        b :: a :: rest -> [ Error "Unrecognized Types (Divide)" ] ++ rest
       }
     OpLeaf Range ->
       { state
@@ -133,7 +164,7 @@ evaluateStep ops state =
     [] -> state
     DataLeaf Function :: rest ->
       let
-        (baseFn, next) = Util.debug "rfn" (readFunction rest)
+        (baseFn, next) = readFunction rest
         -- exclude Termination character
         fn = Util.dropLast 1 baseFn
       in

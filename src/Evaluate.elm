@@ -5,9 +5,13 @@ import Decode exposing (..)
 import Literate exposing (Token)
 import CodeTree exposing (invertInstruction)
 import Types exposing (..)
+import Util
 
 type alias TasteState =
-  { accumulator : Atom
+  { stack : List Atom
+  , input : String
+  , x : Atom
+  , y : Atom
   }
 
 -- permutes into stack-friendly order
@@ -56,18 +60,87 @@ permute leaves =
 evaluateInstruction : TasteState -> InstructionLeaf -> TasteState
 evaluateInstruction state op =
   case op of
-    OpLeaf Add -> { state | accumulator = TypeInteger 5 }
-    OpLeaf Subtract -> { state | accumulator = TypeInteger 3 }
+    DataLeaf Zero  -> { state | stack = [ TypeInteger  0 ] ++ state.stack }
+    DataLeaf One   -> { state | stack = [ TypeInteger  1 ] ++ state.stack }
+    DataLeaf Two   -> { state | stack = [ TypeInteger  2 ] ++ state.stack }
+    DataLeaf Three -> { state | stack = [ TypeInteger  3 ] ++ state.stack }
+    DataLeaf Four  -> { state | stack = [ TypeInteger  4 ] ++ state.stack }
+    DataLeaf Five  -> { state | stack = [ TypeInteger  5 ] ++ state.stack }
+    DataLeaf Ten   -> { state | stack = [ TypeInteger 10 ] ++ state.stack }
+    DataLeaf RegX  -> { state | stack = [ state.x ] ++ state.stack }
+    DataLeaf RegY  -> { state | stack = [ state.y ] ++ state.stack }
+    OpLeaf Add ->
+      { state
+      | stack = case state.stack of
+        [] -> []
+        Error a :: rest -> state.stack
+        [a] -> [ Error "Insufficient Arguments" ]
+        TypeInteger b :: TypeInteger a :: rest ->
+          [ TypeInteger (a + b) ] ++ rest
+        TypeFunction fn :: TypeList v :: rest ->
+          let
+            mapped = List.map
+              (\el ->
+                let
+                  step = evaluateStep fn { stack = [], input = state.input, x = el, y = state.y }
+                in
+                case step.stack of
+                  [] -> Error "Evaluated to empty stack (Map)"
+                  a :: _ -> a
+              )
+              v
+          in
+          [ TypeList mapped ] ++ rest
+        a :: b :: rest -> [ Error "Unrecognized Types (Add)" ] ++ rest
+      }
+    OpLeaf Multiply ->
+      { state
+      | stack = case state.stack of
+        [] -> []
+        Error a :: rest -> state.stack
+        [a] -> [ Error "Insufficient Arguments" ]
+        TypeInteger a :: TypeInteger b :: rest ->
+          [ TypeInteger (b * a) ] ++ rest
+        a :: b :: rest -> [ Error "Unrecognized Types (Multiply)" ] ++ rest
+      }
+    OpLeaf Range ->
+      { state
+      | stack = case state.stack of
+        [] -> []
+        Error a :: rest -> state.stack
+        TypeInteger a :: rest ->
+          [ TypeList (List.map TypeInteger (List.range 0 a)) ] ++ rest
+        a :: rest -> [ Error "Unrecognized Type (Range)" ] ++ rest
+      }
     -- UnknownOp -> state
-    _ -> state
+    _ -> { state | stack = [ Error ("Unrecognized operator " ++ Debug.toString op) ] ++ state.stack }
 
-evaluateStep : List Token -> String -> TasteState -> TasteState
-evaluateStep tokens input state =
-  case tokens of
+-- takes a list of instructions starting with the first character in the body
+readFunction : List InstructionLeaf -> (List InstructionLeaf, List InstructionLeaf)
+readFunction =
+  Util.splitWhere
+    (\depth -> depth == 0)
+    (\op depth -> case op of
+      DataLeaf Function -> depth + 1
+      OpLeaf Terminate -> depth - 1
+      _ -> depth
+      )
+    1
+
+evaluateStep : List InstructionLeaf -> TasteState -> TasteState
+evaluateStep ops state =
+  case ops of
     [] -> state
+    DataLeaf Function :: rest ->
+      let
+        (baseFn, next) = Util.debug "rfn" (readFunction rest)
+        -- exclude Termination character
+        fn = Util.dropLast 1 baseFn
+      in
+      evaluateStep next { state | stack = [ TypeFunction fn ] ++ state.stack }
     op :: rest ->
-      evaluateInstruction state op.ins
-        |> evaluateStep rest input
+      evaluateInstruction state op
+        |> evaluateStep rest
 
 evaluate : String -> String -> String
 evaluate code input =
@@ -80,14 +153,24 @@ evaluate code input =
     |> Tuple.mapFirst (
       List.map Debug.toString
       >> String.join ""
-      >> (\x -> x ++ " (" ++ String.fromInt (String.length x) ++ " bits)")
+      >> (\x -> x
+        ++ " (" ++ String.fromInt (String.length x) ++ " bits, "
+        ++ String.fromFloat (toFloat (String.length x) / 8.0) ++ " bytes)")
       )
+    |> Tuple.mapSecond (\x -> x
+      |> permute
+      |> (\tokens -> evaluateStep tokens { stack = [], input = input, x = TypeInteger 0, y = TypeInteger 100 })
+      |> .stack
+      |> List.map (\y -> atomToString y ++ "\n" ++ Debug.toString y)
+      |> String.join "\n--------------\n")
+    |> (\x -> Tuple.first x ++ "\n==============\n" ++ Tuple.second x)
+    {-
     |> Tuple.mapSecond (
       permute
       >> List.map Debug.toString
       >> String.join "\n"
     )
-    |> (\x -> Tuple.first x ++ "\n-------\n" ++ Tuple.second x)
+    -}
     -- |> tuplemap2 (List.map Debug.toString)
     -- |> String.toList
     -- |> List.map String.fromChar

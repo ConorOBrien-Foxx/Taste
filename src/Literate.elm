@@ -14,6 +14,11 @@ getInstruction op =
   case op of
     "0" -> DataLeaf Zero
     "1" -> DataLeaf One
+    "2" -> DataLeaf Two
+    "3" -> DataLeaf Three
+    "4" -> DataLeaf Four
+    "5" -> DataLeaf Five
+    "t" -> DataLeaf Ten
     -- TODO: more constants
     "x" -> DataLeaf RegX
     "y" -> DataLeaf RegY

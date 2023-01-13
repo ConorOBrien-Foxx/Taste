@@ -5174,6 +5174,38 @@ var $elm$core$Platform$Sub$none = $elm$core$Platform$Sub$batch(_List_Nil);
 var $author$project$Main$subscriptions = function (_v0) {
 	return $elm$core$Platform$Sub$none;
 };
+var $author$project$Atom$TypeInteger = function (a) {
+	return {$: 'TypeInteger', a: a};
+};
+var $elm$core$String$fromFloat = _String_fromNumber;
+var $author$project$Atom$atomToString = function (atom) {
+	switch (atom.$) {
+		case 'TypeInteger':
+			var i = atom.a;
+			return $elm$core$String$fromInt(i);
+		case 'TypeFloat':
+			var f = atom.a;
+			return $elm$core$String$fromFloat(f);
+		case 'TypeBoolean':
+			var b = atom.a;
+			return b ? 'true' : 'false';
+		case 'TypeString':
+			var s = atom.a;
+			return s;
+		case 'TypeList':
+			var l = atom.a;
+			return A2(
+				$elm$core$String$join,
+				' ',
+				A2($elm$core$List$map, $author$project$Atom$atomToString, l));
+		case 'TypeFunction':
+			var fn = atom.a;
+			return '{ ... }';
+		default:
+			var s = atom.a;
+			return 'Error: ' + s;
+	}
+};
 var $elm$core$Basics$composeR = F3(
 	function (f, g, x) {
 		return g(
@@ -5198,6 +5230,8 @@ var $elm$core$List$concatMap = F2(
 var $author$project$Types$DataLeaf = function (a) {
 	return {$: 'DataLeaf', a: a};
 };
+var $author$project$Types$Five = {$: 'Five'};
+var $author$project$Types$Four = {$: 'Four'};
 var $author$project$Types$Function = {$: 'Function'};
 var $author$project$CodeTree$Leaf = function (a) {
 	return {$: 'Leaf', a: a};
@@ -5205,10 +5239,12 @@ var $author$project$CodeTree$Leaf = function (a) {
 var $author$project$Types$One = {$: 'One'};
 var $author$project$Types$RegX = {$: 'RegX'};
 var $author$project$Types$RegY = {$: 'RegY'};
+var $author$project$Types$Ten = {$: 'Ten'};
+var $author$project$Types$Three = {$: 'Three'};
 var $author$project$CodeTree$Tree = function (a) {
 	return {$: 'Tree', a: a};
 };
-var $author$project$Types$UnknownData = {$: 'UnknownData'};
+var $author$project$Types$Two = {$: 'Two'};
 var $author$project$Types$Zero = {$: 'Zero'};
 var $author$project$CodeTree$dataTree = $author$project$CodeTree$Tree(
 	_Utils_Tuple2(
@@ -5230,8 +5266,24 @@ var $author$project$CodeTree$dataTree = $author$project$CodeTree$Tree(
 									$author$project$Types$DataLeaf($author$project$Types$Zero)),
 								$author$project$CodeTree$Leaf(
 									$author$project$Types$DataLeaf($author$project$Types$One)))),
-						$author$project$CodeTree$Leaf(
-							$author$project$Types$DataLeaf($author$project$Types$UnknownData))))))));
+						$author$project$CodeTree$Tree(
+							_Utils_Tuple2(
+								$author$project$CodeTree$Leaf(
+									$author$project$Types$DataLeaf($author$project$Types$Two)),
+								$author$project$CodeTree$Tree(
+									_Utils_Tuple2(
+										$author$project$CodeTree$Tree(
+											_Utils_Tuple2(
+												$author$project$CodeTree$Leaf(
+													$author$project$Types$DataLeaf($author$project$Types$Three)),
+												$author$project$CodeTree$Leaf(
+													$author$project$Types$DataLeaf($author$project$Types$Four)))),
+										$author$project$CodeTree$Tree(
+											_Utils_Tuple2(
+												$author$project$CodeTree$Leaf(
+													$author$project$Types$DataLeaf($author$project$Types$Five)),
+												$author$project$CodeTree$Leaf(
+													$author$project$Types$DataLeaf($author$project$Types$Ten))))))))))))));
 var $author$project$Types$Input = {$: 'Input'};
 var $author$project$Types$OpLeaf = function (a) {
 	return {$: 'OpLeaf', a: a};
@@ -5253,6 +5305,16 @@ var $author$project$Decode$getDataType = F2(
 			case 'Zero':
 				return $author$project$Types$TasteNumeric;
 			case 'One':
+				return $author$project$Types$TasteNumeric;
+			case 'Two':
+				return $author$project$Types$TasteNumeric;
+			case 'Three':
+				return $author$project$Types$TasteNumeric;
+			case 'Four':
+				return $author$project$Types$TasteNumeric;
+			case 'Five':
+				return $author$project$Types$TasteNumeric;
+			case 'Ten':
 				return $author$project$Types$TasteNumeric;
 			case 'Function':
 				return $author$project$Types$TasteFunction;
@@ -5497,6 +5559,601 @@ var $author$project$Decode$decode = function (bits) {
 	return $author$project$Decode$decodeStep(
 		A2($author$project$Decode$newParseState, $author$project$CodeTree$dataTree, bits)).result;
 };
+var $author$project$Atom$Error = function (a) {
+	return {$: 'Error', a: a};
+};
+var $author$project$Atom$TypeFunction = function (a) {
+	return {$: 'TypeFunction', a: a};
+};
+var $author$project$Atom$TypeList = function (a) {
+	return {$: 'TypeList', a: a};
+};
+var $elm$core$Debug$log = _Debug_log;
+var $author$project$Util$debug = F2(
+	function (msg, value) {
+		return _Utils_Tuple2(
+			A2($elm$core$Debug$log, msg, value),
+			value).b;
+	});
+var $elm$core$List$takeReverse = F3(
+	function (n, list, kept) {
+		takeReverse:
+		while (true) {
+			if (n <= 0) {
+				return kept;
+			} else {
+				if (!list.b) {
+					return kept;
+				} else {
+					var x = list.a;
+					var xs = list.b;
+					var $temp$n = n - 1,
+						$temp$list = xs,
+						$temp$kept = A2($elm$core$List$cons, x, kept);
+					n = $temp$n;
+					list = $temp$list;
+					kept = $temp$kept;
+					continue takeReverse;
+				}
+			}
+		}
+	});
+var $elm$core$List$takeTailRec = F2(
+	function (n, list) {
+		return $elm$core$List$reverse(
+			A3($elm$core$List$takeReverse, n, list, _List_Nil));
+	});
+var $elm$core$List$takeFast = F3(
+	function (ctr, n, list) {
+		if (n <= 0) {
+			return _List_Nil;
+		} else {
+			var _v0 = _Utils_Tuple2(n, list);
+			_v0$1:
+			while (true) {
+				_v0$5:
+				while (true) {
+					if (!_v0.b.b) {
+						return list;
+					} else {
+						if (_v0.b.b.b) {
+							switch (_v0.a) {
+								case 1:
+									break _v0$1;
+								case 2:
+									var _v2 = _v0.b;
+									var x = _v2.a;
+									var _v3 = _v2.b;
+									var y = _v3.a;
+									return _List_fromArray(
+										[x, y]);
+								case 3:
+									if (_v0.b.b.b.b) {
+										var _v4 = _v0.b;
+										var x = _v4.a;
+										var _v5 = _v4.b;
+										var y = _v5.a;
+										var _v6 = _v5.b;
+										var z = _v6.a;
+										return _List_fromArray(
+											[x, y, z]);
+									} else {
+										break _v0$5;
+									}
+								default:
+									if (_v0.b.b.b.b && _v0.b.b.b.b.b) {
+										var _v7 = _v0.b;
+										var x = _v7.a;
+										var _v8 = _v7.b;
+										var y = _v8.a;
+										var _v9 = _v8.b;
+										var z = _v9.a;
+										var _v10 = _v9.b;
+										var w = _v10.a;
+										var tl = _v10.b;
+										return (ctr > 1000) ? A2(
+											$elm$core$List$cons,
+											x,
+											A2(
+												$elm$core$List$cons,
+												y,
+												A2(
+													$elm$core$List$cons,
+													z,
+													A2(
+														$elm$core$List$cons,
+														w,
+														A2($elm$core$List$takeTailRec, n - 4, tl))))) : A2(
+											$elm$core$List$cons,
+											x,
+											A2(
+												$elm$core$List$cons,
+												y,
+												A2(
+													$elm$core$List$cons,
+													z,
+													A2(
+														$elm$core$List$cons,
+														w,
+														A3($elm$core$List$takeFast, ctr + 1, n - 4, tl)))));
+									} else {
+										break _v0$5;
+									}
+							}
+						} else {
+							if (_v0.a === 1) {
+								break _v0$1;
+							} else {
+								break _v0$5;
+							}
+						}
+					}
+				}
+				return list;
+			}
+			var _v1 = _v0.b;
+			var x = _v1.a;
+			return _List_fromArray(
+				[x]);
+		}
+	});
+var $elm$core$List$take = F2(
+	function (n, list) {
+		return A3($elm$core$List$takeFast, 0, n, list);
+	});
+var $author$project$Util$dropLast = F2(
+	function (n, vec) {
+		return A2(
+			$elm$core$List$take,
+			$elm$core$List$length(vec) - n,
+			vec);
+	});
+var $author$project$Util$splitWhere = F4(
+	function (cond, fld, seed, vec) {
+		return function (x) {
+			return _Utils_Tuple2(x.head, x.tail);
+		}(
+			A3(
+				$elm$core$List$foldl,
+				F2(
+					function (v, state) {
+						if (state.done) {
+							return _Utils_update(
+								state,
+								{
+									tail: _Utils_ap(
+										state.tail,
+										_List_fromArray(
+											[v]))
+								});
+						} else {
+							var nextFocus = A2(fld, v, state.focus);
+							return _Utils_update(
+								state,
+								{
+									done: cond(nextFocus),
+									focus: nextFocus,
+									head: _Utils_ap(
+										state.head,
+										_List_fromArray(
+											[v]))
+								});
+						}
+					}),
+				{done: false, focus: seed, head: _List_Nil, tail: _List_Nil},
+				vec));
+	});
+var $author$project$Evaluate$readFunction = A3(
+	$author$project$Util$splitWhere,
+	function (depth) {
+		return !depth;
+	},
+	F2(
+		function (op, depth) {
+			_v0$2:
+			while (true) {
+				switch (op.$) {
+					case 'DataLeaf':
+						if (op.a.$ === 'Function') {
+							var _v1 = op.a;
+							return depth + 1;
+						} else {
+							break _v0$2;
+						}
+					case 'OpLeaf':
+						if (op.a.$ === 'Terminate') {
+							var _v2 = op.a;
+							return depth - 1;
+						} else {
+							break _v0$2;
+						}
+					default:
+						break _v0$2;
+				}
+			}
+			return depth;
+		}),
+	1);
+var $elm$core$Debug$toString = _Debug_toString;
+var $author$project$Evaluate$evaluateInstruction = F2(
+	function (state, op) {
+		_v3$12:
+		while (true) {
+			switch (op.$) {
+				case 'DataLeaf':
+					switch (op.a.$) {
+						case 'Zero':
+							var _v4 = op.a;
+							return _Utils_update(
+								state,
+								{
+									stack: _Utils_ap(
+										_List_fromArray(
+											[
+												$author$project$Atom$TypeInteger(0)
+											]),
+										state.stack)
+								});
+						case 'One':
+							var _v5 = op.a;
+							return _Utils_update(
+								state,
+								{
+									stack: _Utils_ap(
+										_List_fromArray(
+											[
+												$author$project$Atom$TypeInteger(1)
+											]),
+										state.stack)
+								});
+						case 'Two':
+							var _v6 = op.a;
+							return _Utils_update(
+								state,
+								{
+									stack: _Utils_ap(
+										_List_fromArray(
+											[
+												$author$project$Atom$TypeInteger(2)
+											]),
+										state.stack)
+								});
+						case 'Three':
+							var _v7 = op.a;
+							return _Utils_update(
+								state,
+								{
+									stack: _Utils_ap(
+										_List_fromArray(
+											[
+												$author$project$Atom$TypeInteger(3)
+											]),
+										state.stack)
+								});
+						case 'Four':
+							var _v8 = op.a;
+							return _Utils_update(
+								state,
+								{
+									stack: _Utils_ap(
+										_List_fromArray(
+											[
+												$author$project$Atom$TypeInteger(4)
+											]),
+										state.stack)
+								});
+						case 'Five':
+							var _v9 = op.a;
+							return _Utils_update(
+								state,
+								{
+									stack: _Utils_ap(
+										_List_fromArray(
+											[
+												$author$project$Atom$TypeInteger(5)
+											]),
+										state.stack)
+								});
+						case 'Ten':
+							var _v10 = op.a;
+							return _Utils_update(
+								state,
+								{
+									stack: _Utils_ap(
+										_List_fromArray(
+											[
+												$author$project$Atom$TypeInteger(10)
+											]),
+										state.stack)
+								});
+						case 'RegX':
+							var _v11 = op.a;
+							return _Utils_update(
+								state,
+								{
+									stack: _Utils_ap(
+										_List_fromArray(
+											[state.x]),
+										state.stack)
+								});
+						case 'RegY':
+							var _v12 = op.a;
+							return _Utils_update(
+								state,
+								{
+									stack: _Utils_ap(
+										_List_fromArray(
+											[state.y]),
+										state.stack)
+								});
+						default:
+							break _v3$12;
+					}
+				case 'OpLeaf':
+					switch (op.a.$) {
+						case 'Add':
+							var _v13 = op.a;
+							return _Utils_update(
+								state,
+								{
+									stack: function () {
+										var _v14 = state.stack;
+										_v14$1:
+										while (true) {
+											_v14$5:
+											while (true) {
+												if (!_v14.b) {
+													return _List_Nil;
+												} else {
+													if (!_v14.b.b) {
+														if (_v14.a.$ === 'Error') {
+															break _v14$1;
+														} else {
+															var a = _v14.a;
+															return _List_fromArray(
+																[
+																	$author$project$Atom$Error('Insufficient Arguments')
+																]);
+														}
+													} else {
+														switch (_v14.a.$) {
+															case 'Error':
+																break _v14$1;
+															case 'TypeInteger':
+																if (_v14.b.a.$ === 'TypeInteger') {
+																	var b = _v14.a.a;
+																	var _v15 = _v14.b;
+																	var a = _v15.a.a;
+																	var rest = _v15.b;
+																	return _Utils_ap(
+																		_List_fromArray(
+																			[
+																				$author$project$Atom$TypeInteger(a + b)
+																			]),
+																		rest);
+																} else {
+																	break _v14$5;
+																}
+															case 'TypeFunction':
+																if (_v14.b.a.$ === 'TypeList') {
+																	var fn = _v14.a.a;
+																	var _v16 = _v14.b;
+																	var v = _v16.a.a;
+																	var rest = _v16.b;
+																	var mapped = A2(
+																		$elm$core$List$map,
+																		function (el) {
+																			var step = A2(
+																				$author$project$Evaluate$evaluateStep,
+																				fn,
+																				{input: state.input, stack: _List_Nil, x: el, y: state.y});
+																			var _v17 = step.stack;
+																			if (!_v17.b) {
+																				return $author$project$Atom$Error('Evaluated to empty stack (Map)');
+																			} else {
+																				var a = _v17.a;
+																				return a;
+																			}
+																		},
+																		v);
+																	return _Utils_ap(
+																		_List_fromArray(
+																			[
+																				$author$project$Atom$TypeList(mapped)
+																			]),
+																		rest);
+																} else {
+																	break _v14$5;
+																}
+															default:
+																break _v14$5;
+														}
+													}
+												}
+											}
+											var a = _v14.a;
+											var _v18 = _v14.b;
+											var b = _v18.a;
+											var rest = _v18.b;
+											return _Utils_ap(
+												_List_fromArray(
+													[
+														$author$project$Atom$Error('Unrecognized Types (Add)')
+													]),
+												rest);
+										}
+										var a = _v14.a.a;
+										var rest = _v14.b;
+										return state.stack;
+									}()
+								});
+						case 'Multiply':
+							var _v19 = op.a;
+							return _Utils_update(
+								state,
+								{
+									stack: function () {
+										var _v20 = state.stack;
+										_v20$1:
+										while (true) {
+											_v20$4:
+											while (true) {
+												if (!_v20.b) {
+													return _List_Nil;
+												} else {
+													if (!_v20.b.b) {
+														if (_v20.a.$ === 'Error') {
+															break _v20$1;
+														} else {
+															var a = _v20.a;
+															return _List_fromArray(
+																[
+																	$author$project$Atom$Error('Insufficient Arguments')
+																]);
+														}
+													} else {
+														switch (_v20.a.$) {
+															case 'Error':
+																break _v20$1;
+															case 'TypeInteger':
+																if (_v20.b.a.$ === 'TypeInteger') {
+																	var a = _v20.a.a;
+																	var _v21 = _v20.b;
+																	var b = _v21.a.a;
+																	var rest = _v21.b;
+																	return _Utils_ap(
+																		_List_fromArray(
+																			[
+																				$author$project$Atom$TypeInteger(b * a)
+																			]),
+																		rest);
+																} else {
+																	break _v20$4;
+																}
+															default:
+																break _v20$4;
+														}
+													}
+												}
+											}
+											var a = _v20.a;
+											var _v22 = _v20.b;
+											var b = _v22.a;
+											var rest = _v22.b;
+											return _Utils_ap(
+												_List_fromArray(
+													[
+														$author$project$Atom$Error('Unrecognized Types (Multiply)')
+													]),
+												rest);
+										}
+										var a = _v20.a.a;
+										var rest = _v20.b;
+										return state.stack;
+									}()
+								});
+						case 'Range':
+							var _v23 = op.a;
+							return _Utils_update(
+								state,
+								{
+									stack: function () {
+										var _v24 = state.stack;
+										if (!_v24.b) {
+											return _List_Nil;
+										} else {
+											switch (_v24.a.$) {
+												case 'Error':
+													var a = _v24.a.a;
+													var rest = _v24.b;
+													return state.stack;
+												case 'TypeInteger':
+													var a = _v24.a.a;
+													var rest = _v24.b;
+													return _Utils_ap(
+														_List_fromArray(
+															[
+																$author$project$Atom$TypeList(
+																A2(
+																	$elm$core$List$map,
+																	$author$project$Atom$TypeInteger,
+																	A2($elm$core$List$range, 0, a)))
+															]),
+														rest);
+												default:
+													var a = _v24.a;
+													var rest = _v24.b;
+													return _Utils_ap(
+														_List_fromArray(
+															[
+																$author$project$Atom$Error('Unrecognized Type (Range)')
+															]),
+														rest);
+											}
+										}
+									}()
+								});
+						default:
+							break _v3$12;
+					}
+				default:
+					break _v3$12;
+			}
+		}
+		return _Utils_update(
+			state,
+			{
+				stack: _Utils_ap(
+					_List_fromArray(
+						[
+							$author$project$Atom$Error(
+							'Unrecognized operator ' + $elm$core$Debug$toString(op))
+						]),
+					state.stack)
+			});
+	});
+var $author$project$Evaluate$evaluateStep = F2(
+	function (ops, state) {
+		evaluateStep:
+		while (true) {
+			if (!ops.b) {
+				return state;
+			} else {
+				if ((ops.a.$ === 'DataLeaf') && (ops.a.a.$ === 'Function')) {
+					var _v1 = ops.a.a;
+					var rest = ops.b;
+					var _v2 = A2(
+						$author$project$Util$debug,
+						'rfn',
+						$author$project$Evaluate$readFunction(rest));
+					var baseFn = _v2.a;
+					var next = _v2.b;
+					var fn = A2($author$project$Util$dropLast, 1, baseFn);
+					var $temp$ops = next,
+						$temp$state = _Utils_update(
+						state,
+						{
+							stack: _Utils_ap(
+								_List_fromArray(
+									[
+										$author$project$Atom$TypeFunction(fn)
+									]),
+								state.stack)
+						});
+					ops = $temp$ops;
+					state = $temp$state;
+					continue evaluateStep;
+				} else {
+					var op = ops.a;
+					var rest = ops.b;
+					return A2(
+						$author$project$Evaluate$evaluateStep,
+						rest,
+						A2($author$project$Evaluate$evaluateInstruction, state, op));
+				}
+			}
+		}
+	});
 var $elm$core$List$filter = F2(
 	function (isGood, list) {
 		return A3(
@@ -5729,7 +6386,6 @@ var $author$project$Evaluate$permute = function (leaves) {
 	return $author$project$Evaluate$permuteHelper(
 		{build: _List_Nil, focusOp: $elm$core$Maybe$Nothing, leaves: leaves}).build;
 };
-var $elm$core$Debug$toString = _Debug_toString;
 var $elm$core$String$cons = _String_cons;
 var $elm$core$String$fromChar = function (_char) {
 	return A2($elm$core$String$cons, _char, '');
@@ -5741,6 +6397,16 @@ var $author$project$Literate$getInstruction = function (op) {
 			return $author$project$Types$DataLeaf($author$project$Types$Zero);
 		case '1':
 			return $author$project$Types$DataLeaf($author$project$Types$One);
+		case '2':
+			return $author$project$Types$DataLeaf($author$project$Types$Two);
+		case '3':
+			return $author$project$Types$DataLeaf($author$project$Types$Three);
+		case '4':
+			return $author$project$Types$DataLeaf($author$project$Types$Four);
+		case '5':
+			return $author$project$Types$DataLeaf($author$project$Types$Five);
+		case 't':
+			return $author$project$Types$DataLeaf($author$project$Types$Ten);
 		case 'x':
 			return $author$project$Types$DataLeaf($author$project$Types$RegX);
 		case 'y':
@@ -5798,17 +6464,32 @@ var $author$project$Literate$tokenize = function (code) {
 var $author$project$Evaluate$evaluate = F2(
 	function (code, input) {
 		return function (x) {
-			return x.a + ('\n-------\n' + x.b);
+			return x.a + ('\n==============\n' + x.b);
 		}(
 			A2(
 				$elm$core$Tuple$mapSecond,
-				A2(
-					$elm$core$Basics$composeR,
-					$author$project$Evaluate$permute,
-					A2(
-						$elm$core$Basics$composeR,
-						$elm$core$List$map($elm$core$Debug$toString),
-						$elm$core$String$join('\n'))),
+				function (x) {
+					return A2(
+						$elm$core$String$join,
+						'\n--------------\n',
+						A2(
+							$elm$core$List$map,
+							function (y) {
+								return $author$project$Atom$atomToString(y) + ('\n' + $elm$core$Debug$toString(y));
+							},
+							function (tokens) {
+								return A2(
+									$author$project$Evaluate$evaluateStep,
+									tokens,
+									{
+										input: input,
+										stack: _List_Nil,
+										x: $author$project$Atom$TypeInteger(0),
+										y: $author$project$Atom$TypeInteger(100)
+									});
+							}(
+								$author$project$Evaluate$permute(x)).stack));
+				},
 				A2(
 					$elm$core$Tuple$mapFirst,
 					A2(
@@ -5819,7 +6500,8 @@ var $author$project$Evaluate$evaluate = F2(
 							$elm$core$String$join(''),
 							function (x) {
 								return x + (' (' + ($elm$core$String$fromInt(
-									$elm$core$String$length(x)) + ' bits)'));
+									$elm$core$String$length(x)) + (' bits, ' + ($elm$core$String$fromFloat(
+									$elm$core$String$length(x) / 8.0) + ' bytes)'))));
 							})),
 					function (x) {
 						return _Utils_Tuple2(

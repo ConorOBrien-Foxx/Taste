@@ -1,12 +1,15 @@
 module Atom exposing (..)
 
+import Types exposing (InstructionLeaf)
+
 type Atom
   = TypeInteger Int
   | TypeFloat Float
   | TypeBoolean Bool
   | TypeString String
   | TypeList (List Atom)
-  | Error
+  | TypeFunction (List InstructionLeaf)
+  | Error String
 
 pair : Atom -> Atom -> List Atom
 pair a b = [ a, b ]
@@ -30,5 +33,8 @@ atomToString atom =
       List.map atomToString l
         |> String.join " "
     
-    Error ->
-      "err"
+    TypeFunction fn ->
+      "{ ... }"
+    
+    Error s ->
+      "Error: " ++ s

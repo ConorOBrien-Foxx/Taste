@@ -4,6 +4,11 @@ module Types exposing (..)
 type TasteData
   = Zero
   | One
+  | Two
+  | Three
+  | Four
+  | Five
+  | Ten
   | RegX
   | RegY
   | Function

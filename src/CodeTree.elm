@@ -138,7 +138,27 @@ dataTree =
           Leaf (DataLeaf One)
         ),
         --111
-        Leaf (DataLeaf UnknownData)
+        Tree (
+          --1110
+          Leaf (DataLeaf Two),
+          --1111
+          Tree (
+            --11110
+            Tree (
+              --111100
+              Leaf (DataLeaf Three),
+              --111101
+              Leaf (DataLeaf Four)
+            ),
+            --11111
+            Tree (
+              --111110
+              Leaf (DataLeaf Five),
+              --111111
+              Leaf (DataLeaf Ten)
+            )
+          )
+        )
       )
     )
   )

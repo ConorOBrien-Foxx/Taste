@@ -54,16 +54,13 @@ getDataType state dat =
     RegY -> TasteNumeric -- TODO: variable type
     Zero -> TasteNumeric
     One -> TasteNumeric
+    Two -> TasteNumeric
+    Three -> TasteNumeric
+    Four -> TasteNumeric
+    Five -> TasteNumeric
+    Ten -> TasteNumeric
     Function -> TasteFunction
     UnknownData -> TasteNumeric -- TODO: unknown/maybe type
-
-{-
-debug message value =
-  Tuple.second ( (
-    Debug.log message value,
-    value
-  ) )
--}
 
 decodeStep : ParseState -> ParseState
 decodeStep state =

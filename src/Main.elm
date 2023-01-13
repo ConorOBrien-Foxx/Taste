@@ -21,13 +21,6 @@ main =
     , view = view
     , subscriptions = subscriptions
     }
-
-
-debug message value =
-  Tuple.second ( (
-    Debug.log "Debugging:" message,
-    value
-  ) )
   
 -- MODEL
 type alias Model =

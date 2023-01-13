@@ -5174,8 +5174,8 @@ var $elm$core$Platform$Sub$none = $elm$core$Platform$Sub$batch(_List_Nil);
 var $author$project$Main$subscriptions = function (_v0) {
 	return $elm$core$Platform$Sub$none;
 };
-var $elm$core$Basics$composeL = F3(
-	function (g, f, x) {
+var $elm$core$Basics$composeR = F3(
+	function (f, g, x) {
 		return g(
 			f(x));
 	});
@@ -5616,78 +5616,118 @@ var $elm$core$Tuple$mapSecond = F2(
 			func(y));
 	});
 var $elm$core$Basics$neq = _Utils_notEqual;
-var $author$project$Evaluate$permuteHelper = F2(
-	function (state, leaves) {
-		permuteHelper:
-		while (true) {
-			if (!leaves.b) {
-				var _v1 = state.focusOp;
-				if (_v1.$ === 'Just') {
-					var x = _v1.a;
+var $author$project$Evaluate$permuteHelper = function (state) {
+	permuteHelper:
+	while (true) {
+		var _v0 = state.leaves;
+		if (!_v0.b) {
+			var _v1 = state.focusOp;
+			if (_v1.$ === 'Just') {
+				var x = _v1.a;
+				return _Utils_update(
+					state,
+					{
+						build: _Utils_ap(
+							state.build,
+							_List_fromArray(
+								[
+									$author$project$Types$OpLeaf(x)
+								]))
+					});
+			} else {
+				return state;
+			}
+		} else {
+			var ins = _v0.a;
+			var rest = _v0.b;
+			if (_Utils_eq(
+				ins,
+				$author$project$Types$OpLeaf($author$project$Types$Terminate))) {
+				var nextState = $author$project$Evaluate$permuteHelper(
+					_Utils_update(
+						state,
+						{leaves: _List_Nil}));
+				return _Utils_update(
+					nextState,
+					{leaves: rest});
+			} else {
+				var nextState = function () {
+					_v2$2:
+					while (true) {
+						switch (ins.$) {
+							case 'OpLeaf':
+								var op = ins.a;
+								var _v3 = state.focusOp;
+								if (_v3.$ === 'Just') {
+									var x = _v3.a;
+									return _Utils_update(
+										state,
+										{
+											build: _Utils_ap(
+												state.build,
+												_List_fromArray(
+													[
+														$author$project$Types$OpLeaf(x)
+													])),
+											focusOp: $elm$core$Maybe$Just(op),
+											leaves: rest
+										});
+								} else {
+									return _Utils_update(
+										state,
+										{
+											focusOp: $elm$core$Maybe$Just(op),
+											leaves: rest
+										});
+								}
+							case 'DataLeaf':
+								if (ins.a.$ === 'Function') {
+									var _v4 = ins.a;
+									var subState = $author$project$Evaluate$permuteHelper(
+										{build: _List_Nil, focusOp: $elm$core$Maybe$Nothing, leaves: rest});
+									return _Utils_update(
+										state,
+										{
+											build: _Utils_ap(
+												state.build,
+												_Utils_ap(
+													_List_fromArray(
+														[ins]),
+													_Utils_ap(
+														subState.build,
+														_List_fromArray(
+															[
+																$author$project$Types$OpLeaf($author$project$Types$Terminate)
+															])))),
+											leaves: subState.leaves
+										});
+								} else {
+									break _v2$2;
+								}
+							default:
+								break _v2$2;
+						}
+					}
 					return _Utils_update(
 						state,
 						{
 							build: _Utils_ap(
 								state.build,
 								_List_fromArray(
-									[
-										$author$project$Types$OpLeaf(x)
-									]))
+									[ins])),
+							leaves: rest
 						});
-				} else {
-					return state;
-				}
-			} else {
-				var ins = leaves.a;
-				var rest = leaves.b;
-				var nextState = function () {
-					if (ins.$ === 'OpLeaf') {
-						var op = ins.a;
-						var _v3 = state.focusOp;
-						if (_v3.$ === 'Just') {
-							var x = _v3.a;
-							return _Utils_update(
-								state,
-								{
-									build: _Utils_ap(
-										state.build,
-										_List_fromArray(
-											[
-												$author$project$Types$OpLeaf(x)
-											])),
-									focusOp: $elm$core$Maybe$Just(op)
-								});
-						} else {
-							return _Utils_update(
-								state,
-								{
-									focusOp: $elm$core$Maybe$Just(op)
-								});
-						}
-					} else {
-						return _Utils_update(
-							state,
-							{
-								build: _Utils_ap(
-									state.build,
-									_List_fromArray(
-										[ins]))
-							});
-					}
 				}();
-				var $temp$state = nextState,
-					$temp$leaves = rest;
+				var $temp$state = nextState;
 				state = $temp$state;
-				leaves = $temp$leaves;
 				continue permuteHelper;
 			}
 		}
-	});
+	}
+};
 var $author$project$Evaluate$permute = function (leaves) {
-	return A2(
-		$author$project$Evaluate$permuteHelper,
-		{build: _List_Nil, focusOp: $elm$core$Maybe$Nothing},
-		leaves).build;
+	return $author$project$Evaluate$permuteHelper(
+		{build: _List_Nil, focusOp: $elm$core$Maybe$Nothing, leaves: leaves}).build;
 };
 var $elm$core$Debug$toString = _Debug_toString;
 var $elm$core$String$cons = _String_cons;
@@ -5763,24 +5803,24 @@ var $author$project$Evaluate$evaluate = F2(
 			A2(
 				$elm$core$Tuple$mapSecond,
 				A2(
-					$elm$core$Basics$composeL,
+					$elm$core$Basics$composeR,
+					$author$project$Evaluate$permute,
 					A2(
-						$elm$core$Basics$composeL,
-						$elm$core$String$join('\n'),
-						$elm$core$List$map($elm$core$Debug$toString)),
-					$author$project$Evaluate$permute),
+						$elm$core$Basics$composeR,
+						$elm$core$List$map($elm$core$Debug$toString),
+						$elm$core$String$join('\n'))),
 				A2(
 					$elm$core$Tuple$mapFirst,
 					A2(
-						$elm$core$Basics$composeL,
+						$elm$core$Basics$composeR,
+						$elm$core$List$map($elm$core$Debug$toString),
 						A2(
-							$elm$core$Basics$composeL,
+							$elm$core$Basics$composeR,
+							$elm$core$String$join(''),
 							function (x) {
 								return x + (' (' + ($elm$core$String$fromInt(
 									$elm$core$String$length(x)) + ' bits)'));
-							},
-							$elm$core$String$join('')),
-						$elm$core$List$map($elm$core$Debug$toString)),
+							})),
 					function (x) {
 						return _Utils_Tuple2(
 							x,

@@ -3,7 +3,7 @@ module Main exposing (..)
 import Browser
 import Html exposing (
   Html, button, div, text, textarea,
-  h1, h2, h3
+  h1, h2, h3, a, p
   )
 -- ^ spaces required bc Elm gets "confused" otherwise
 
@@ -76,11 +76,23 @@ update msg model =
       )
 
 -- VIEW
+blankLink : String -> String -> Html msg
+blankLink link content =
+  a [ href link, target "_blank" ] [ text content ]
+
+-- TODO: make this look not like garbage
 view : Model -> Html Msg
 view model =
   div [ id "ElmApp" ]
-    [ h1 [] [ text "Taste" ]
-    , h3 [ ] [ text "Code" ]
+    [ h1 [] [ blankLink "https://github.com/ConorOBrien-Foxx/Taste" "Taste" ]
+    , h2 [] [ text "About" ]
+    , p []
+      [ text "Taste is an esoteric language with bit-level commands. Ostensibly also a golfing language, although it is more a proof of concept than intentional high-level golfing competitor. Once the language is more stable, I will add documentation. If you're interested in reading into the source for an idea of the operators, you could try "
+      , blankLink "https://github.com/ConorOBrien-Foxx/Taste/blob/main/src/CodeTree.elm" "src/CodeTree.elm"
+      , text "." 
+      ]
+    , h2 [] [ text "Interpreter" ]
+    , h3 [] [ text "Code" ]
     , textarea [ id "code", value model.code, onInput CodeChange ] [ ]
     , h3 [] [ text "Input" ]
     , textarea [ id "input", value model.input, onInput ChangeInput ] [ ]

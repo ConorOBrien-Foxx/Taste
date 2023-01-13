@@ -11,11 +11,24 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 
 import Taste
+import BrowserPorts
 
 -- MAIN
 main =
-  Browser.sandbox { init = init, update = update, view = view }
+  Browser.element
+    { init = init
+    , update = update
+    , view = view
+    , subscriptions = subscriptions
+    }
 
+
+debug message value =
+  Tuple.second ( (
+    Debug.log "Debugging:" message,
+    value
+  ) )
+  
 -- MODEL
 type alias Model =
   { code : String
@@ -23,12 +36,20 @@ type alias Model =
   , output : String
   }
 
-init : Model
-init =
-  { code = "x+1*y"
-  , input = ""
-  , output = ""
+type alias SavedModel =
+  { code : String
+  , input : String
   }
+
+init : SavedModel -> (Model, Cmd Msg)
+init flags =
+  (
+    { code = flags.code
+    , input = flags.input
+    , output = ""
+    }
+  , Cmd.none
+  )
 
 -- UPDATE
 
@@ -36,24 +57,30 @@ type Msg
   = CodeChange String
   | ChangeInput String
   | Execute
+  | Receive String
 
-debug message value =
-  Tuple.second ( (
-    Debug.log "Debugging:" message,
-    value
-  ) )
-
-update : Msg -> Model -> Model
+update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
     CodeChange newCode ->
-      { model | code = newCode }
+      ( { model | code = newCode }
+      , BrowserPorts.storeCode newCode
+      )
     
     ChangeInput newInput ->
-      { model | input = newInput }
+      ( { model | input = newInput }
+      , BrowserPorts.storeInput newInput
+      )
     
     Execute ->
-      { model | output = Taste.evaluate model.code model.input }
+      ( { model | output = Taste.evaluate model.code model.input }
+      , Cmd.none
+      )
+    
+    Receive str ->
+      ( model
+      , Cmd.none
+      )
 
 -- VIEW
 view : Model -> Html Msg
@@ -68,3 +95,9 @@ view model =
     , h3 [] [ text "Output" ]
     , textarea [ readonly True, id "output", value model.output ] [ ]
     ]
+
+-- SUBSCRIPTIONS
+subscriptions : Model -> Sub Msg
+subscriptions _ =
+  Sub.none
+  -- BrowserPorts.messageReceiver Receive

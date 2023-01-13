@@ -14,8 +14,15 @@
 <script type="text/javascript">
 
 const app = Elm.Main.init({
-    node: document.getElementById("ElmApp")
+    node: document.getElementById("ElmApp"),
+    flags: {
+        code: sessionStorage.code ?? "",
+        input: sessionStorage.input ?? ""
+    }
 });
+
+app.ports.storeCode.subscribe(code => sessionStorage.code = code);
+app.ports.storeInput.subscribe(input => sessionStorage.input = input);
 
 // you CANNOT make me do this in Elm.
 // copied from TIO

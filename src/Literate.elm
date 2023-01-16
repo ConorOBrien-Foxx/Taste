@@ -19,6 +19,7 @@ getInstruction op =
     "4" -> DataLeaf Four
     "5" -> DataLeaf Five
     "t" -> DataLeaf Ten
+    "i" -> DataLeaf Input
     -- TODO: more constants
     "x" -> DataLeaf RegX
     "y" -> DataLeaf RegY
@@ -29,12 +30,12 @@ getInstruction op =
     "/" -> OpLeaf Divide
     "*" -> OpLeaf Multiply
     "%" -> OpLeaf Modulo
-    "i" -> OpLeaf Input
     "=" -> OpLeaf Equality
     "}" -> OpLeaf Terminate
     "N" -> TypeLeaf TasteNumeric
     "B" -> TypeLeaf TasteBoolean
     "F" -> TypeLeaf TasteFunction
+    "S" -> TypeLeaf TasteString
     "L" -> TypeLeaf TasteList
     
     _ -> OpLeaf UnknownOp

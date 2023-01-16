@@ -2,6 +2,7 @@ module Decode exposing (..)
 
 import Types exposing (..)
 import CodeTree exposing (..)
+import Util exposing (lastElement)
 
 type alias ParseState =
   { target : CodeTree
@@ -26,7 +27,6 @@ newParseState tree bits =
 arityOf : TasteOperation -> Int
 arityOf op =
   case op of
-    Input -> 0
     Range -> 0
     Add -> 1
     Subtract -> 1
@@ -41,8 +41,8 @@ isDone : TasteOperation -> List TasteType -> Bool
 isDone op types =
   case (op, types) of
     -- Overrides
-    (Input, [ TasteFunction ]) -> False
-    (Input, [ TasteFunction, _ ]) -> True
+    -- (Input, [ TasteFunction ]) -> False
+    -- (Input, [ TasteFunction, _ ]) -> True
     -- Default
     _ -> arityOf op <= List.length types
 
@@ -60,6 +60,10 @@ getDataType state dat =
     Five -> TasteNumeric
     Ten -> TasteNumeric
     Function -> TasteFunction
+    Input ->
+      state.typeArgs
+      |> Util.lastElement
+      |> Maybe.withDefault TasteNumeric
     UnknownData -> TasteNumeric -- TODO: unknown/maybe type
 
 decodeStep : ParseState -> ParseState
@@ -79,12 +83,12 @@ decodeStep state =
             }
     -- we've hit a terminal point
     Leaf leaf ->
-      if leaf == OpLeaf Terminate
+      if (Util.debug "Leaf:" leaf) == OpLeaf Terminate
       then state
       else
       let
         augmented = case leaf of
-          TypeLeaf _ -> state
+          TypeLeaf tasteType -> { state | typeArgs = state.typeArgs ++ [ tasteType ] }
           OpLeaf op -> { state | op = op }
           DataLeaf td -> { state | argList = state.argList ++ [ getDataType state td ] }
         
@@ -108,7 +112,7 @@ decodeStep state =
           , result = nextState.result ++ [ leaf ] ++ subStep.result ++ [ OpLeaf Terminate ]
           }
       -- Special Case: Accept Type
-      else if leaf == OpLeaf Input || leaf == TypeLeaf TasteList
+      else if leaf == DataLeaf Input || leaf == TypeLeaf TasteList
       then
         let
           subStep = decodeStep (newParseState typeTree state.bits)
@@ -116,6 +120,17 @@ decodeStep state =
           { nextState
           | bits = subStep.bits
           , result = nextState.result ++ [ leaf ] ++ subStep.result
+          , argList = if leaf == DataLeaf Input
+            then
+              (Util.dropLast 1 nextState.argList) ++
+              List.filterMap
+                (\x -> case x of
+                  TypeLeaf tasteType -> Just tasteType
+                  _ -> Nothing
+                )
+                subStep.result
+            else
+              nextState.argList
           }
       -- Normal Case: Append the leaf
       else

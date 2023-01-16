@@ -9,62 +9,82 @@ import Util
 
 type alias TasteState =
   { stack : List Atom
+  , typeStack : List TasteType
   , input : String
   , x : Atom
   , y : Atom
   }
 
+defaultState : String -> TasteState
+defaultState input =
+  { stack = []
+  , typeStack = []
+  , input = input
+  , x = TypeInteger 0
+  , y = TypeInteger 100
+  }
+
 -- permutes into stack-friendly order
 type alias PermuteState =
   { focusOp : Maybe TasteOperation
+  , needsType : Maybe InstructionLeaf
   , build : List InstructionLeaf
   , leaves : List InstructionLeaf
   }
 
--- TODO: maintain function order
 permuteHelper : PermuteState -> PermuteState
 permuteHelper state =
   case state.leaves of
-    [] -> case state.focusOp of
-      Just x -> { state | build = state.build ++ [ OpLeaf x ] }
-      Nothing -> state
+    [] -> case (state.focusOp, state.needsType) of
+      (Just x, Just y) -> { state | build = state.build ++ [ y, OpLeaf x ], needsType = Nothing }
+      (Just x, Nothing) -> { state | build = state.build ++ [ OpLeaf x ] }
+      (Nothing, Just y) -> { state | build = state.build ++ [ y ], needsType = Nothing }
+      (Nothing, Nothing) -> state
     ins :: rest ->
       if ins == OpLeaf Terminate then
+        -- TODO: terminate may leave trailing needsType
         let
           nextState = permuteHelper { state | leaves = [] }
         in
         { nextState | leaves = rest }
       else
       let
-        nextState = case ins of
-          OpLeaf op -> case state.focusOp of
-            Just x ->  { state | focusOp = Just op, leaves = rest, build = state.build ++ [ OpLeaf x ] }
-            Nothing -> { state | focusOp = Just op, leaves = rest }
+        stateRest = case Util.debug "Needs type ~~~ " state.needsType of
+          Just typeIns ->
+            case ins of
+              TypeLeaf _ -> { state | leaves = rest }
+              _ -> { state | leaves = rest, build = state.build ++ [ typeIns ], needsType = Nothing }
+          Nothing -> { state | leaves = rest }
+        nextState = case Util.debug "Then op @@@@" ins of
+          OpLeaf op -> case stateRest.focusOp of
+            Just x ->  { stateRest | focusOp = Just op, build = stateRest.build ++ [ OpLeaf x ] }
+            Nothing -> { stateRest | focusOp = Just op }
+          DataLeaf Input -> { stateRest | needsType = Just ins }
           DataLeaf Function ->
             let
-              subState = permuteHelper { focusOp = Nothing, build = [], leaves = rest }
+              subState = permuteHelper { focusOp = Nothing, needsType = Nothing, build = [], leaves = rest }
             in
-            { state
-            | build = state.build ++ [ ins ] ++ subState.build ++ [ OpLeaf Terminate ]
+            { stateRest
+            | build = stateRest.build ++ [ ins ] ++ subState.build ++ [ OpLeaf Terminate ]
             , leaves = subState.leaves
             }
-          _ -> { state | build = state.build ++ [ ins ], leaves = rest }
+          _ -> { stateRest | build = stateRest.build ++ [ ins ] }
       in
       permuteHelper nextState
 
 permute : List InstructionLeaf -> List InstructionLeaf
 permute leaves =
-  permuteHelper { focusOp = Nothing, build = [], leaves = leaves }
+  permuteHelper { focusOp = Nothing, needsType = Nothing, build = [], leaves = leaves }
   |> .build
 
 
 newStateWithX : TasteState -> Atom -> TasteState
 newStateWithX state x =
-  { stack = [], input = state.input, x = x, y = state.y }
+  { stack = [], typeStack = [], input = state.input, x = x, y = state.y }
 
 newStateWithXY : TasteState -> Atom -> Atom -> TasteState
 newStateWithXY state x y =
-  { stack = [], input = state.input, x = x, y = y }
+  { stack = [], typeStack = [], input = state.input, x = x, y = y }
 
 atomHead : List Atom -> Atom
 atomHead stack =
@@ -84,9 +104,46 @@ evaluateToAtom : List InstructionLeaf -> TasteState -> Atom
 evaluateToAtom fn = 
   evaluateStep fn >> .stack >> atomHead
 
+pushType : TasteType -> TasteState -> TasteState
+pushType tasteType state =
+  { state
+  | typeStack = [ tasteType ] ++ state.typeStack
+  }
+
+-- TODO: finish
+popType : TasteState -> (Maybe TasteType, TasteState)
+popType state =
+  let
+    (tasteType, typeStack) = case state.typeStack of
+      [] -> (Nothing, state.typeStack)
+      TasteList :: rest -> (Nothing, state.typeStack)
+      head :: rest -> (Just head, rest)
+  in
+  Util.debug "popped:" (tasteType, { state | typeStack = typeStack })
+
+parseInput : TasteType -> String -> (Atom, String)
+parseInput tasteType input =
+  case Util.debug "input type:" tasteType of
+    TasteNumeric ->
+      let (digits, mid, rest) = Util.splitWhereString (not << Char.isDigit) input
+      in
+      ( TypeInteger (digits |> String.toInt |> Maybe.withDefault 0)
+      , String.trimLeft (mid ++ rest)
+      )
+    TasteString ->
+      let (line, mid, rest) = Util.splitWhereString (\ch -> ch == '\n') input
+      in
+      ( TypeString line
+      , rest
+      )
+    -- TODO
+    -- TasteList -> ...
+    _ -> (Error "could not parse input", input)
+
 evaluateInstruction : TasteState -> InstructionLeaf -> TasteState
 evaluateInstruction state op =
   case op of
+    TypeLeaf typ  -> pushType typ state
     DataLeaf Zero  -> { state | stack = [ TypeInteger  0 ] ++ state.stack }
     DataLeaf One   -> { state | stack = [ TypeInteger  1 ] ++ state.stack }
     DataLeaf Two   -> { state | stack = [ TypeInteger  2 ] ++ state.stack }
@@ -96,6 +153,16 @@ evaluateInstruction state op =
     DataLeaf Ten   -> { state | stack = [ TypeInteger 10 ] ++ state.stack }
     DataLeaf RegX  -> { state | stack = [ state.x ] ++ state.stack }
     DataLeaf RegY  -> { state | stack = [ state.y ] ++ state.stack }
+    DataLeaf Input ->
+      let
+        (tasteType, nextState) = popType state
+        finalType = Maybe.withDefault TasteNumeric tasteType
+        (element, nextInput) = parseInput finalType nextState.input
+      in
+        { nextState
+        | input = nextInput
+        , stack = [ element ] ++ state.stack
+        }
     OpLeaf Add ->
       { state
       | stack = case state.stack of
@@ -147,9 +214,9 @@ evaluateInstruction state op =
     _ -> { state | stack = [ Error ("Unrecognized operator " ++ Debug.toString op) ] ++ state.stack }
 
 -- takes a list of instructions starting with the first character in the body
-readFunction : List InstructionLeaf -> (List InstructionLeaf, List InstructionLeaf)
+readFunction : List InstructionLeaf -> (List InstructionLeaf, List InstructionLeaf, List InstructionLeaf)
 readFunction =
-  Util.splitWhere
+  Util.splitWhereMap
     (\depth -> depth == 0)
     (\op depth -> case op of
       DataLeaf Function -> depth + 1
@@ -164,9 +231,7 @@ evaluateStep ops state =
     [] -> state
     DataLeaf Function :: rest ->
       let
-        (baseFn, next) = readFunction rest
-        -- exclude Termination character
-        fn = Util.dropLast 1 baseFn
+        (fn, term, next) = readFunction rest
       in
       evaluateStep next { state | stack = [ TypeFunction fn ] ++ state.stack }
     op :: rest ->
@@ -190,7 +255,8 @@ evaluate code input =
       )
     |> Tuple.mapSecond (\x -> x
       |> permute
-      |> (\tokens -> evaluateStep tokens { stack = [], input = input, x = TypeInteger 0, y = TypeInteger 100 })
+      |> Util.debug "Before evaluation"
+      |> (\tokens -> evaluateStep tokens (defaultState input))
       |> .stack
       |> List.map (\y -> atomToString y ++ "\n" ++ Debug.toString y)
       |> String.join "\n--------------\n")

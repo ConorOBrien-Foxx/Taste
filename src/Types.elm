@@ -12,6 +12,7 @@ type TasteData
   | RegX
   | RegY
   | Function
+  | Input
   | UnknownData
 
 type TasteOperation
@@ -20,7 +21,6 @@ type TasteOperation
   | Multiply
   | Divide
   | Modulo
-  | Input
   | Range
   | Equality
   | Terminate
@@ -31,6 +31,7 @@ type TasteType
   = TasteNumeric
   | TasteFunction
   | TasteBoolean
+  | TasteString
   | TasteList
   
 -- TREE

@@ -63,9 +63,14 @@ typeTree =
       --11
       Tree (
         --110
-        Leaf (TypeLeaf TasteFunction),
+        Tree (
+          --1100
+          Leaf (TypeLeaf TasteFunction),
+          --1101
+          Leaf (TypeLeaf TasteBoolean)
+        ),
         --111
-        Leaf (TypeLeaf TasteBoolean)
+        Leaf (TypeLeaf TasteString)
       )
     )
   )
@@ -76,7 +81,7 @@ opTree =
     --0
     Tree (
       --00
-      Leaf (OpLeaf Input),
+      Leaf (OpLeaf UnknownOp),
       --01
       Tree (
         --010
@@ -122,7 +127,12 @@ dataTree =
       --00
       Leaf (DataLeaf RegX),
       --01
-      Leaf (DataLeaf RegY)
+      Tree (
+        --010
+        Leaf (DataLeaf RegY),
+        --011
+        Leaf (DataLeaf Input)
+      )
     ),
     --1
     Tree (

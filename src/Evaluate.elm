@@ -143,6 +143,26 @@ parseInput tasteType input =
     -- TasteList -> ...
     _ -> (Error "could not parse input", input)
 
+stateMap : (List InstructionLeaf) -> TasteState -> (List Atom) -> (TasteState, List Atom)
+stateMap fn state =
+  List.foldl
+    (\el (inner, build) ->
+      let (nextInner, atom) = evaluateAt fn inner el
+      in (nextInner, build ++ [ atom ])
+    )
+    (state, [])
+
+applyStack : (TasteState, List Atom) -> TasteState
+applyStack (state, stack) =
+  { state | stack = stack }
+
+mismatchError : String -> List Atom -> Atom
+mismatchError op operands =
+  Error (
+    "Mismatched types for " ++ op ++ ": "
+    ++ (String.join "; " <| List.map atomToString operands)
+  )
+
 evaluateInstruction : TasteState -> InstructionLeaf -> TasteState
 evaluateInstruction state op =
   case op of
@@ -167,56 +187,49 @@ evaluateInstruction state op =
         , stack = [ element ] ++ state.stack
         }
     OpLeaf Add ->
-      let
-        (nextState, nextStack) = case state.stack of
-          [] ->
-            (state, [])
-          Error a :: rest ->
-            (state, state.stack)
-          [a] ->
-            (state, [ Error "Insufficient Arguments" ])
-          TypeInteger b :: TypeInteger a :: rest ->
-            (state, [ TypeInteger (a + b) ] ++ rest)
-          TypeString b :: TypeString a :: rest ->
-            (state, [ TypeString (a ++ b) ] ++ rest)
-          -- map
-          TypeFunction fn :: TypeList v :: rest ->
-            let
-              (returnState, mapped) = List.foldl
-                (\el (inner, build) ->
-                  let (nextInner, atom) = evaluateAt fn inner el
-                  in (nextInner, build ++ [ atom ])
-                )
-                (state, [])
-                v
-            in
-            (returnState, [ TypeList mapped ] ++ rest)
-          -- append
-          any :: TypeList arr :: rest ->
-            (state, [ TypeList (arr ++ [ any ]) ] ++ rest)
-          b :: a :: rest ->
-            (state, [ Error "Unrecognized Types (Add)" ] ++ rest)
-      in
-        { nextState
-        | stack = nextStack
-        }
-    OpLeaf Multiply ->
-      { state
-      | stack = case state.stack of
-        [] -> []
-        Error a :: rest -> state.stack
-        [a] -> [ Error "Insufficient Arguments" ]
-        -- TypeFunction fn :: TypeInteger n :: rest ->
-          -- let
-            -- mapped = n - 1
-              -- |> List.range 0
-              -- |> List.map TypeInteger
-              -- |> List.map (evaluateAt fn state)
-          -- in [ TypeList mapped ] ++ rest
+      applyStack <| case state.stack of
+        [] ->
+          (state, [])
+        Error a :: rest ->
+          (state, state.stack)
+        [a] ->
+          (state, [ Error "Insufficient Arguments" ])
         TypeInteger b :: TypeInteger a :: rest ->
-          [ TypeInteger (a * b) ] ++ rest
-        b :: a :: rest -> [ Error "Unrecognized Types (Multiply)" ] ++ rest
-      }
+          (state, [ TypeInteger (a + b) ] ++ rest)
+        TypeString b :: TypeString a :: rest ->
+          (state, [ TypeString (a ++ b) ] ++ rest)
+        -- map
+        TypeFunction fn :: TypeList v :: rest ->
+          let
+            (returnState, mapped) = stateMap fn state v
+          in
+          (returnState, [ TypeList mapped ] ++ rest)
+        -- append
+        any :: TypeList arr :: rest ->
+          (state, [ TypeList (arr ++ [ any ]) ] ++ rest)
+        b :: a :: rest ->
+          (state, [ mismatchError "Add" [a, b] ] ++ rest)
+    OpLeaf Multiply ->
+      applyStack <| case state.stack of
+        [] ->
+          (state, [])
+        Error a :: rest ->
+          (state, state.stack)
+        [a] ->
+          (state, [ Error "Insufficient Arguments" ])
+        -- apply N times
+        TypeFunction fn :: TypeInteger n :: rest ->
+          let
+            (returnState, mapped) = n - 1
+              |> List.range 0
+              |> List.map TypeInteger
+              |> stateMap fn state
+          in
+          (returnState, [ TypeList mapped ] ++ rest)
+        TypeInteger b :: TypeInteger a :: rest ->
+          (state, [ TypeInteger (a * b) ] ++ rest)
+        b :: a :: rest ->
+          (state, [ mismatchError "Multiply" [a, b] ] ++ rest)
     OpLeaf Divide ->
       { state
       | stack = case state.stack of
@@ -230,7 +243,8 @@ evaluateInstruction state op =
           -- -- TODO: seed
           -- let folded = List.foldl (evaluateAt2 fn state) (TypeInteger 0) v
           -- in [ folded ] ++ rest
-        b :: a :: rest -> [ Error "Unrecognized Types (Divide)" ] ++ rest
+        b :: a :: rest ->
+          [ mismatchError "Divide" [a, b] ] ++ rest
       }
     OpLeaf Range ->
       { state
@@ -254,7 +268,7 @@ readFunction =
       OpLeaf Terminate -> depth - 1
       _ -> depth
       )
-    1
+    1 -- initial depth
 
 evaluateStep : List InstructionLeaf -> TasteState -> TasteState
 evaluateStep ops state =
@@ -278,11 +292,12 @@ evaluate code input =
     |> (\x -> (x, x))
     |> Tuple.mapFirst (
       List.map CodeTree.invertInstruction
-      >> List.map (List.map Debug.toString >> String.join "")
-      >> String.join "│"
-      >> (\x -> x
-        ++ " (" ++ String.fromInt (String.length x) ++ " bits, "
-        ++ String.fromFloat (toFloat (String.length x) / 8.0) ++ " bytes)")
+      >> (\bits ->
+        let bitCount = List.length <| Util.flatten bits
+        in
+        (bits |> List.map (List.map Debug.toString >> String.join "") |> String.join "│")
+        ++ " (" ++ String.fromInt bitCount ++ " bit(s), "
+        ++ String.fromFloat (toFloat bitCount / 8.0) ++ " byte(s))")
       )
     |> Tuple.mapSecond (\x -> x
       |> List.concatMap CodeTree.invertInstruction
@@ -296,35 +311,3 @@ evaluate code input =
       |> List.map (\y -> atomToString y ++ "\n" ++ Debug.toString y)
       |> String.join "\n--------------\n")
     |> (\x -> Tuple.first x ++ "\n==============\n" ++ Tuple.second x)
-    {-
-    |> Tuple.mapSecond (
-      permute
-      >> List.map Debug.toString
-      >> String.join "\n"
-    )
-    -}
-    -- |> tuplemap2 (List.map Debug.toString)
-    -- |> String.toList
-    -- |> List.map String.fromChar
-    -- |> List.filter (\x -> x == "0" || x == "1" )
-    -- |> List.map ((Maybe.withDefault 0) << String.toInt)
-    -- |> decode
-    -- |> List.map Debug.toString
-    -- |> String.join "\n"
-    
-    -- |> List.map (\x -> "\"" ++ x ++ "\"")
-    -- |> String.join " "
-{-
-evaluate : String -> String -> String
-evaluate code input =
-  let
-    startState =
-      { accumulator = TypeInteger 0
-      }
-    
-    tokens = tokenize code
-  in
-  evaluateStep tokens input startState
-    |> .accumulator
-    |> atomToString
--}

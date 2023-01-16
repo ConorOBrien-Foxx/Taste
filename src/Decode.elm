@@ -10,7 +10,7 @@ type alias ParseState =
   , bits : List Int
   , op : TasteOperation
   , argList : List TasteType
-  , typeArgs : List TasteType
+  , typeStack : List TasteType
   }
 
 newParseState : CodeTree -> List Int -> ParseState
@@ -18,23 +18,24 @@ newParseState tree bits =
   { target = tree
   , result = []
   , bits = bits
-  , op = UnknownOp
+  , op = BaseOperation
   , argList = []
-  , typeArgs = []
+  , typeStack = []
   }
 
--- the number of ADDITIONAL arguments an operation takes
+-- the number of TOTAL arguments an operation takes
 arityOf : TasteOperation -> Int
 arityOf op =
   case op of
-    Range -> 0
-    Add -> 1
-    Subtract -> 1
-    Multiply -> 1
-    Divide -> 1
-    Modulo -> 1
-    Equality -> 1
+    Range -> 1
+    Add -> 2
+    Subtract -> 2
+    Multiply -> 2
+    Divide -> 2
+    Modulo -> 2
+    Equality -> 2
     Terminate -> 0
+    BaseOperation -> 1
     UnknownOp -> 0
 
 isDone : TasteOperation -> List TasteType -> Bool
@@ -44,7 +45,17 @@ isDone op types =
     -- (Input, [ TasteFunction ]) -> False
     -- (Input, [ TasteFunction, _ ]) -> True
     -- Default
-    _ -> arityOf op <= List.length types
+    _ ->
+      let currentArity = List.length ( Util.debug "Check if done (types)" types )
+      in currentArity == arityOf op
+
+returnType : TasteOperation -> List TasteType -> TasteType
+returnType op types =
+  -- TODO: fill
+  case (op, types) of
+    (BaseOperation, [ x ]) -> x
+    (Multiply, [ TasteNumeric, TasteFunction ]) -> TasteList
+    _ -> TasteNumeric
 
 -- TODO: store some states internally (e.g. registers)
 getDataType : ParseState -> TasteData -> TasteType
@@ -61,7 +72,7 @@ getDataType state dat =
     Ten -> TasteNumeric
     Function -> TasteFunction
     Input ->
-      state.typeArgs
+      state.typeStack
       |> Util.lastElement
       |> Maybe.withDefault TasteNumeric
     UnknownData -> TasteNumeric -- TODO: unknown/maybe type
@@ -86,19 +97,23 @@ decodeStep state =
     Leaf (TypeLeaf tasteType) ->
       -- TODO: handle recursive types
       { state
-      | typeArgs = state.typeArgs ++ [ tasteType ]
+      | typeStack = state.typeStack ++ [ tasteType ]
       , result = state.result ++ [ TypeLeaf tasteType ]
       }
     Leaf leaf ->
       let
-        augmented = case leaf of
+        augmented = case Util.debug "leaf" leaf of
           TypeLeaf _ -> state -- handled above
           OpLeaf op -> { state | op = op }
           DataLeaf td -> { state | argList = state.argList ++ [ getDataType state td ] }
         
-        nextState = if isDone augmented.op augmented.argList
+        nextState = if isDone augmented.op (Util.debug "-- arg list --" augmented.argList)
           then
-            { augmented | target = opTree, argList = [], typeArgs = [] }
+            { augmented
+            | target = opTree
+            , argList = [ returnType augmented.op augmented.argList ]
+            , typeStack = []
+            }
           else
             { augmented | target = dataTree }
         

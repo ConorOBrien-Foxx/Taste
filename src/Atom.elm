@@ -11,8 +11,8 @@ type Atom
   | TypeFunction (List InstructionLeaf)
   | Error String
 
-pair : Atom -> Atom -> List Atom
-pair a b = [ a, b ]
+-- pair : Atom -> Atom -> List Atom
+-- pair a b = [ a, b ]
 
 atomToString : Atom -> String
 atomToString atom =

@@ -24,6 +24,7 @@ type TasteOperation
   | Range
   | Equality
   | Terminate
+  | BaseOperation -- the one at the start
   -- TODO: factor out UnknownData and UnknownOp
   | UnknownOp
 

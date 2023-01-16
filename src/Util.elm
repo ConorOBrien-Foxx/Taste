@@ -22,6 +22,9 @@ lastElement =
 mapTupleSame3 : (a -> b) -> (a, a, a) -> (b, b, b)
 mapTupleSame3 fn (q, w, e) = (fn q, fn w, fn e)
 
+flatten : List (List a) -> List a
+flatten = List.concatMap (\x -> x)
+
 {-
   splits a list into three parts based on two functions
   =====================================================
@@ -98,7 +101,7 @@ splitWhere : (a -> Bool) -> List a -> (List a, List a, List a)
 splitWhere cond vec =
   case vec of
     [] -> ([], [], [])
-    [k] -> ([], [k], [])
+    [k] -> if cond k then ([], [k], []) else ([k], [], [])
     head :: rest ->
       splitWhereMap cond (\a b -> a) head vec
 

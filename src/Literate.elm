@@ -46,4 +46,4 @@ tokenize code =
     |> String.toList
     |> List.map String.fromChar
     |> List.map (\x -> { raw = x, ins = getInstruction x })
-    -- |> List.filter (.op == UnknownOp)
+    |> List.filter (\tok -> tok.ins /= OpLeaf UnknownOp)

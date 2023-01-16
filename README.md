@@ -11,6 +11,7 @@ Types:
 
 
 ```
+Somewhat outdated
 Data = Operator [...Data] Operator ...
 
 ## n reversed n

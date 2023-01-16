@@ -81,7 +81,7 @@ opTree =
     --0
     Tree (
       --00
-      Leaf (OpLeaf UnknownOp),
+      Leaf (OpLeaf SaveZ),
       --01
       Tree (
         --010
@@ -129,7 +129,11 @@ dataTree =
       --01
       Tree (
         --010
-        Leaf (DataLeaf RegY),
+        Tree (
+          --0100
+          Leaf (DataLeaf RegY),
+          Leaf (DataLeaf RegZ)
+        ),
         --011
         Leaf (DataLeaf Input)
       )

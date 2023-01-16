@@ -13,6 +13,7 @@ type alias TasteState =
   , input : String
   , x : Atom
   , y : Atom
+  , z : Atom
   }
 
 defaultState : String -> TasteState
@@ -22,6 +23,7 @@ defaultState input =
   , input = input
   , x = TypeInteger 0
   , y = TypeInteger 100
+  , z = TypeInteger 16
   }
 
 -- permutes into stack-friendly order
@@ -80,11 +82,11 @@ permute leaves =
 
 newStateWithX : TasteState -> Atom -> TasteState
 newStateWithX state x =
-  { stack = [], typeStack = [], input = state.input, x = x, y = state.y }
+  { stack = [], typeStack = [], input = state.input, x = x, y = state.y, z = state.z }
 
 newStateWithXY : TasteState -> Atom -> Atom -> TasteState
 newStateWithXY state x y =
-  { stack = [], typeStack = [], input = state.input, x = x, y = y }
+  { stack = [], typeStack = [], input = state.input, x = x, y = y, z = state.z }
 
 atomHead : List Atom -> Atom
 atomHead stack =
@@ -143,7 +145,7 @@ parseInput tasteType input =
     -- TasteList -> ...
     _ -> (Error "could not parse input", input)
 
-stateMap : (List InstructionLeaf) -> TasteState -> (List Atom) -> (TasteState, List Atom)
+stateMap : List InstructionLeaf -> TasteState -> List Atom -> (TasteState, List Atom)
 stateMap fn state =
   List.foldl
     (\el (inner, build) ->
@@ -151,6 +153,15 @@ stateMap fn state =
       in (nextInner, build ++ [ atom ])
     )
     (state, [])
+
+stateFoldl : List InstructionLeaf -> TasteState -> Atom -> List Atom -> (TasteState, Atom)
+stateFoldl fn state seed =
+  List.foldl
+    (\el (inner, folding) ->
+      let (nextInner, atom) = evaluateAt2 fn inner folding el
+      in (nextInner, atom)
+    )
+    (state, seed)
 
 applyStack : (TasteState, List Atom) -> TasteState
 applyStack (state, stack) =
@@ -176,6 +187,7 @@ evaluateInstruction state op =
     DataLeaf Ten   -> { state | stack = [ TypeInteger 10 ] ++ state.stack }
     DataLeaf RegX  -> { state | stack = [ state.x ] ++ state.stack }
     DataLeaf RegY  -> { state | stack = [ state.y ] ++ state.stack }
+    DataLeaf RegZ  -> { state | stack = [ state.z ] ++ state.stack }
     DataLeaf Input ->
       let
         (tasteType, nextState) = popType state
@@ -186,6 +198,10 @@ evaluateInstruction state op =
         | input = nextInput
         , stack = [ element ] ++ state.stack
         }
+    OpLeaf SaveZ ->
+      case state.stack of
+        [] -> state
+        a :: rest -> { state | z = a }
     OpLeaf Add ->
       applyStack <| case state.stack of
         [] ->
@@ -226,26 +242,59 @@ evaluateInstruction state op =
               |> stateMap fn state
           in
           (returnState, [ TypeList mapped ] ++ rest)
-        TypeInteger b :: TypeInteger a :: rest ->
-          (state, [ TypeInteger (a * b) ] ++ rest)
-        b :: a :: rest ->
-          (state, [ mismatchError "Multiply" [a, b] ] ++ rest)
+        second :: first :: rest ->
+          let
+            value = case (first, second) of
+              (TypeInteger a, TypeInteger b) -> TypeInteger (a * b)
+              (TypeInteger a, TypeBoolean b) -> TypeInteger (if b then a else 0)
+              (TypeBoolean a, TypeInteger b) -> TypeInteger (if a then b else 0)
+              (TypeBoolean a, TypeBoolean b) -> TypeBoolean (a && b)
+              (a, b) -> mismatchError "Multiply" [a, b]
+          in
+            (state, [ value ] ++ state.stack)
     OpLeaf Divide ->
-      { state
-      | stack = case state.stack of
-        [] -> []
-        Error a :: rest -> state.stack
-        [a] -> [ Error "Insufficient Arguments" ]
+      applyStack <| case state.stack of
+        [] ->
+          (state, [])
+        Error a :: rest ->
+          (state, state.stack)
+        [a] ->
+          (state, [ Error "Insufficient Arguments" ])
         TypeInteger b :: TypeInteger a :: rest ->
           -- TODO: Regular float division and auto casting arguments.
-          [ TypeInteger (a // b) ] ++ rest
-        -- TypeFunction fn :: TypeList v :: rest ->
-          -- -- TODO: seed
-          -- let folded = List.foldl (evaluateAt2 fn state) (TypeInteger 0) v
-          -- in [ folded ] ++ rest
+          (state, [ TypeInteger (a // b) ] ++ rest)
+        TypeFunction fn :: TypeList v :: rest ->
+          let
+            (returnState, folded) = 
+              stateFoldl fn state (TypeInteger 0) v
+          in
+          (returnState, [ folded ] ++ rest)
         b :: a :: rest ->
-          [ mismatchError "Divide" [a, b] ] ++ rest
-      }
+          (state, [ mismatchError "Divide" [a, b] ] ++ rest)
+    OpLeaf Modulo ->
+      applyStack <| case state.stack of
+        [] ->
+          (state, [])
+        Error a :: rest ->
+          (state, state.stack)
+        [a] ->
+          (state, [ Error "Insufficient Arguments" ])
+        TypeInteger b :: TypeInteger a :: rest ->
+          (state, [ TypeInteger (if b == 0 then 0 else modBy b a) ] ++ rest)
+        b :: a :: rest ->
+          (state, [ mismatchError "Add" [a, b] ] ++ rest)
+    OpLeaf Equality ->
+      applyStack <| case state.stack of
+        [] ->
+          (state, [])
+        Error a :: rest ->
+          (state, state.stack)
+        [a] ->
+          (state, [ Error "Insufficient Arguments" ])
+        TypeInteger b :: TypeInteger a :: rest ->
+          (state, [ TypeBoolean (a == b) ] ++ rest)
+        b :: a :: rest ->
+          (state, [ mismatchError "Add" [a, b] ] ++ rest)
     OpLeaf Range ->
       { state
       | stack = case state.stack of

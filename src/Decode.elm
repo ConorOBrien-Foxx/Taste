@@ -34,8 +34,9 @@ arityOf op =
     Divide -> 2
     Modulo -> 2
     Equality -> 2
-    Terminate -> 0
+    SaveZ -> 1
     BaseOperation -> 1
+    Terminate -> 0
     UnknownOp -> 0
 
 isDone : TasteOperation -> List TasteType -> Bool
@@ -63,6 +64,7 @@ getDataType state dat =
   case dat of
     RegX -> TasteNumeric -- TODO: variable type
     RegY -> TasteNumeric -- TODO: variable type
+    RegZ -> TasteNumeric -- TODO: variable type
     Zero -> TasteNumeric
     One -> TasteNumeric
     Two -> TasteNumeric

@@ -11,6 +11,7 @@ type TasteData
   | Ten
   | RegX
   | RegY
+  | RegZ
   | Function
   | Input
   | UnknownData
@@ -24,6 +25,7 @@ type TasteOperation
   | Range
   | Equality
   | Terminate
+  | SaveZ
   | BaseOperation -- the one at the start
   -- TODO: factor out UnknownData and UnknownOp
   | UnknownOp

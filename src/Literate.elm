@@ -23,7 +23,9 @@ getInstruction op =
     -- TODO: more constants
     "x" -> DataLeaf RegX
     "y" -> DataLeaf RegY
+    "z" -> DataLeaf RegZ
     "{" -> DataLeaf Function
+    "@" -> OpLeaf SaveZ
     "r" -> OpLeaf Range
     "+" -> OpLeaf Add
     "-" -> OpLeaf Subtract

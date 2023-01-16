@@ -49,13 +49,13 @@ permuteHelper state =
         { nextState | leaves = rest }
       else
       let
-        stateRest = case Util.debug "Needs type ~~~ " state.needsType of
+        stateRest = case state.needsType of
           Just typeIns ->
             case ins of
               TypeLeaf _ -> { state | leaves = rest }
               _ -> { state | leaves = rest, build = state.build ++ [ typeIns ], needsType = Nothing }
           Nothing -> { state | leaves = rest }
-        nextState = case Util.debug "Then op @@@@" ins of
+        nextState = case ins of
           OpLeaf op -> case stateRest.focusOp of
             Just x ->  { stateRest | focusOp = Just op, build = stateRest.build ++ [ OpLeaf x ] }
             Nothing -> { stateRest | focusOp = Just op }
@@ -92,17 +92,20 @@ atomHead stack =
     [] -> Error "Function evaluated to empty stack"
     a :: _ -> a
 
-evaluateAt : List InstructionLeaf -> TasteState -> Atom -> Atom
+evaluateAt : List InstructionLeaf -> TasteState -> Atom -> (TasteState, Atom)
 evaluateAt fn state el =
   newStateWithX state el |> evaluateToAtom fn
 
-evaluateAt2 : List InstructionLeaf -> TasteState -> Atom -> Atom -> Atom
+evaluateAt2 : List InstructionLeaf -> TasteState -> Atom -> Atom -> (TasteState, Atom)
 evaluateAt2 fn state x y =
   newStateWithXY state x y |> evaluateToAtom fn
 
-evaluateToAtom : List InstructionLeaf -> TasteState -> Atom
-evaluateToAtom fn = 
-  evaluateStep fn >> .stack >> atomHead
+evaluateToAtom : List InstructionLeaf -> TasteState -> (TasteState, Atom)
+evaluateToAtom fn state = 
+  let
+    nextState = evaluateStep fn state
+  in
+  (nextState, atomHead nextState.stack)
 
 pushType : TasteType -> TasteState -> TasteState
 pushType tasteType state =
@@ -164,24 +167,52 @@ evaluateInstruction state op =
         , stack = [ element ] ++ state.stack
         }
     OpLeaf Add ->
-      { state
-      | stack = case state.stack of
-        [] -> []
-        Error a :: rest -> state.stack
-        [a] -> [ Error "Insufficient Arguments" ]
-        TypeInteger b :: TypeInteger a :: rest ->
-          [ TypeInteger (a + b) ] ++ rest
-        TypeFunction fn :: TypeList v :: rest ->
-          let mapped = List.map (evaluateAt fn state) v
-          in [ TypeList mapped ] ++ rest
-        b :: a :: rest -> [ Error "Unrecognized Types (Add)" ] ++ rest
-      }
+      let
+        (nextState, nextStack) = case state.stack of
+          [] ->
+            (state, [])
+          Error a :: rest ->
+            (state, state.stack)
+          [a] ->
+            (state, [ Error "Insufficient Arguments" ])
+          TypeInteger b :: TypeInteger a :: rest ->
+            (state, [ TypeInteger (a + b) ] ++ rest)
+          TypeString b :: TypeString a :: rest ->
+            (state, [ TypeString (a ++ b) ] ++ rest)
+          -- map
+          TypeFunction fn :: TypeList v :: rest ->
+            let
+              (returnState, mapped) = List.foldl
+                (\el (inner, build) ->
+                  let (nextInner, atom) = evaluateAt fn inner el
+                  in (nextInner, build ++ [ atom ])
+                )
+                (state, [])
+                v
+            in
+            (returnState, [ TypeList mapped ] ++ rest)
+          -- append
+          any :: TypeList arr :: rest ->
+            (state, [ TypeList (arr ++ [ any ]) ] ++ rest)
+          b :: a :: rest ->
+            (state, [ Error "Unrecognized Types (Add)" ] ++ rest)
+      in
+        { nextState
+        | stack = nextStack
+        }
     OpLeaf Multiply ->
       { state
       | stack = case state.stack of
         [] -> []
         Error a :: rest -> state.stack
         [a] -> [ Error "Insufficient Arguments" ]
+        -- TypeFunction fn :: TypeInteger n :: rest ->
+          -- let
+            -- mapped = n - 1
+              -- |> List.range 0
+              -- |> List.map TypeInteger
+              -- |> List.map (evaluateAt fn state)
+          -- in [ TypeList mapped ] ++ rest
         TypeInteger b :: TypeInteger a :: rest ->
           [ TypeInteger (a * b) ] ++ rest
         b :: a :: rest -> [ Error "Unrecognized Types (Multiply)" ] ++ rest
@@ -195,10 +226,10 @@ evaluateInstruction state op =
         TypeInteger b :: TypeInteger a :: rest ->
           -- TODO: Regular float division and auto casting arguments.
           [ TypeInteger (a // b) ] ++ rest
-        TypeFunction fn :: TypeList v :: rest ->
-          -- TODO: seed
-          let folded = List.foldl (evaluateAt2 fn state) (TypeInteger 0) v
-          in [ folded ] ++ rest
+        -- TypeFunction fn :: TypeList v :: rest ->
+          -- -- TODO: seed
+          -- let folded = List.foldl (evaluateAt2 fn state) (TypeInteger 0) v
+          -- in [ folded ] ++ rest
         b :: a :: rest -> [ Error "Unrecognized Types (Divide)" ] ++ rest
       }
     OpLeaf Range ->
@@ -244,18 +275,22 @@ evaluate code input =
     |> Literate.tokenize
     |> List.filter (\x -> x.raw /= " ")
     |> List.map .ins
-    |> List.concatMap CodeTree.invertInstruction
-    |> (\x -> (x, Decode.decode x))
+    |> (\x -> (x, x))
     |> Tuple.mapFirst (
-      List.map Debug.toString
-      >> String.join ""
+      List.map CodeTree.invertInstruction
+      >> List.map (List.map Debug.toString >> String.join "")
+      >> String.join "│"
       >> (\x -> x
         ++ " (" ++ String.fromInt (String.length x) ++ " bits, "
         ++ String.fromFloat (toFloat (String.length x) / 8.0) ++ " bytes)")
       )
     |> Tuple.mapSecond (\x -> x
+      |> List.concatMap CodeTree.invertInstruction
+      |> Util.debug "Before decode\n"
+      |> Decode.decode
+      |> Util.debug "Before permute\n"
       |> permute
-      |> Util.debug "Before evaluation"
+      |> Util.debug "Before evaluation\n"
       |> (\tokens -> evaluateStep tokens (defaultState input))
       |> .stack
       |> List.map (\y -> atomToString y ++ "\n" ++ Debug.toString y)

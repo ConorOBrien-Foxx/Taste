@@ -82,13 +82,17 @@ decodeStep state =
             , bits = rest
             }
     -- we've hit a terminal point
+    Leaf (OpLeaf Terminate) -> state
+    Leaf (TypeLeaf tasteType) ->
+      -- TODO: handle recursive types
+      { state
+      | typeArgs = state.typeArgs ++ [ tasteType ]
+      , result = state.result ++ [ TypeLeaf tasteType ]
+      }
     Leaf leaf ->
-      if (Util.debug "Leaf:" leaf) == OpLeaf Terminate
-      then state
-      else
       let
         augmented = case leaf of
-          TypeLeaf tasteType -> { state | typeArgs = state.typeArgs ++ [ tasteType ] }
+          TypeLeaf _ -> state -- handled above
           OpLeaf op -> { state | op = op }
           DataLeaf td -> { state | argList = state.argList ++ [ getDataType state td ] }
         
@@ -105,14 +109,16 @@ decodeStep state =
       if leaf == DataLeaf Function
       then
         let
-          subStep = decodeStep (newParseState dataTree state.bits)
+          subStep = 
+            let a = Util.debug "before function sub-step" 0
+            in Util.debug "function sub-step!!!!" (decodeStep (newParseState dataTree state.bits))
         in
           { nextState
           | bits = subStep.bits
           , result = nextState.result ++ [ leaf ] ++ subStep.result ++ [ OpLeaf Terminate ]
           }
       -- Special Case: Accept Type
-      else if leaf == DataLeaf Input || leaf == TypeLeaf TasteList
+      else if leaf == DataLeaf Input
       then
         let
           subStep = decodeStep (newParseState typeTree state.bits)

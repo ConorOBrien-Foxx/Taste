@@ -55,7 +55,8 @@ returnType op types =
   -- TODO: fill
   case (op, types) of
     (BaseOperation, [ x ]) -> x
-    (Multiply, [ TasteNumeric, TasteFunction ]) -> TasteList
+    -- TODO: get return type of inner function???
+    (Multiply, [ TasteNumeric, TasteFunction ]) -> TasteList TasteNumeric
     _ -> TasteNumeric
 
 -- TODO: store some states internally (e.g. registers)
@@ -97,11 +98,24 @@ decodeStep state =
     -- we've hit a terminal point
     Leaf (OpLeaf Terminate) -> state
     Leaf (TypeLeaf tasteType) ->
-      -- TODO: handle recursive types
-      { state
-      | typeStack = state.typeStack ++ [ tasteType ]
-      , result = state.result ++ [ TypeLeaf tasteType ]
-      }
+      case Util.debug "@##@#@#@# leaf taste type" tasteType of
+        TasteListSignal ->
+          let
+            subStep = decodeStep (newParseState typeTree state.bits)
+            subType = case subStep.result of
+              (TypeLeaf a) :: rest -> a
+              _ -> TasteNumeric
+          in
+            { state
+            | bits = subStep.bits
+            , result = state.result ++ [ TypeLeaf (TasteList subType) ]
+            -- , argList = argList
+            }
+        _ ->
+          { state
+          | typeStack = state.typeStack ++ [ tasteType ]
+          , result = state.result ++ [ TypeLeaf tasteType ]
+          }
     Leaf leaf ->
       let
         augmented = case Util.debug "leaf" leaf of
@@ -143,17 +157,14 @@ decodeStep state =
           { nextState
           | bits = subStep.bits
           , result = nextState.result ++ [ leaf ] ++ subStep.result
-          , argList = if leaf == DataLeaf Input
-            then
-              (Util.dropLast 1 nextState.argList) ++
-              List.filterMap
-                (\x -> case x of
-                  TypeLeaf tasteType -> Just tasteType
-                  _ -> Nothing
-                )
-                subStep.result
-            else
-              nextState.argList
+          , argList =
+            (Util.dropLast 1 nextState.argList) ++
+            List.filterMap
+              (\x -> case x of
+                TypeLeaf tasteType -> Just tasteType
+                _ -> Nothing
+              )
+              subStep.result
           }
       -- Normal Case: Append the leaf
       else

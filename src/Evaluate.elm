@@ -115,16 +115,18 @@ pushType tasteType state =
   | typeStack = [ tasteType ] ++ state.typeStack
   }
 
--- TODO: finish
 popType : TasteState -> (Maybe TasteType, TasteState)
 popType state =
   let
     (tasteType, typeStack) = case state.typeStack of
       [] -> (Nothing, state.typeStack)
-      TasteList :: rest -> (Nothing, state.typeStack)
       head :: rest -> (Just head, rest)
   in
   Util.debug "popped:" (tasteType, { state | typeStack = typeStack })
+
+inputError : String -> (Atom, String)
+inputError input =
+  (Error "could not parse input", input)
 
 parseInput : TasteType -> String -> (Atom, String)
 parseInput tasteType input =
@@ -141,9 +143,18 @@ parseInput tasteType input =
       ( TypeString line
       , rest
       )
-    -- TODO
-    -- TasteList -> ...
-    _ -> (Error "could not parse input", input)
+    -- TODO: other list types
+    TasteList (TasteNumeric) ->
+      let
+        (line, mid, rest) = Util.splitWhereString (\ch -> ch == '\n') input
+        nums = line
+          |> String.split " "
+          |> List.filterMap String.toInt
+          |> List.map TypeInteger
+          |> TypeList
+      in
+      (nums, rest)
+    _ -> inputError input
 
 stateMap : List InstructionLeaf -> TasteState -> List Atom -> (TasteState, List Atom)
 stateMap fn state =
@@ -155,13 +166,19 @@ stateMap fn state =
     (state, [])
 
 stateFoldl : List InstructionLeaf -> TasteState -> Atom -> List Atom -> (TasteState, Atom)
-stateFoldl fn state seed =
-  List.foldl
-    (\el (inner, folding) ->
-      let (nextInner, atom) = evaluateAt2 fn inner folding el
-      in (nextInner, atom)
-    )
-    (state, seed)
+stateFoldl fn state seed vec =
+  let
+    (trueSeed, trueList) = case vec of
+      head :: rest -> (head, rest)
+      _ -> (seed, vec)
+  in
+    List.foldl
+      (\el (inner, folding) ->
+        let (nextInner, atom) = evaluateAt2 fn inner folding el
+        in (nextInner, atom)
+      )
+      (state, trueSeed)
+      trueList
 
 applyStack : (TasteState, List Atom) -> TasteState
 applyStack (state, stack) =
@@ -170,8 +187,9 @@ applyStack (state, stack) =
 mismatchError : String -> List Atom -> Atom
 mismatchError op operands =
   Error (
-    "Mismatched types for " ++ op ++ ": "
+    "Error { Mismatched types for " ++ op ++ ": "
     ++ (String.join "; " <| List.map atomToString operands)
+    ++ "}"
   )
 
 evaluateInstruction : TasteState -> InstructionLeaf -> TasteState
@@ -220,6 +238,9 @@ evaluateInstruction state op =
             (returnState, mapped) = stateMap fn state v
           in
           (returnState, [ TypeList mapped ] ++ rest)
+        -- concat
+        TypeList b :: TypeList a :: rest ->
+          (state, [ TypeList (a ++ b) ] ++ rest)
         -- append
         any :: TypeList arr :: rest ->
           (state, [ TypeList (arr ++ [ any ]) ] ++ rest)
@@ -263,10 +284,12 @@ evaluateInstruction state op =
         TypeInteger b :: TypeInteger a :: rest ->
           -- TODO: Regular float division and auto casting arguments.
           (state, [ TypeInteger (a // b) ] ++ rest)
-        TypeFunction fn :: TypeList v :: rest ->
+        TypeInteger n :: TypeList vec :: rest ->
+          (state, [ vec |> Util.splitChunk n |> List.map TypeList |> TypeList ] ++ rest)
+        TypeFunction fn :: TypeList vec :: rest ->
           let
             (returnState, folded) = 
-              stateFoldl fn state (TypeInteger 0) v
+              stateFoldl fn state (TypeInteger 0) vec
           in
           (returnState, [ folded ] ++ rest)
         b :: a :: rest ->

@@ -19,6 +19,35 @@ lastElement : List a -> Maybe a
 lastElement =
   List.foldl (Just >> always) Nothing
 
+splitSlicesHelper : Int -> List a -> List a -> List (List a)
+splitSlicesHelper by vec build =
+  if List.length build < by
+  then
+    case vec of
+      [] -> if List.isEmpty build then [] else [ build ]
+      head :: rest -> splitSlicesHelper by rest (build ++ [ head ])
+  else
+    build :: splitSlicesHelper by vec []
+
+splitSlices : Int -> List a -> List (List a)
+splitSlices by vec =
+  splitSlicesHelper by vec []
+
+splitChunk : Int -> List a -> List (List a)
+splitChunk into vec =
+  let
+    size = List.length vec
+    eachChunk = ceiling (toFloat size / toFloat into)
+  in 
+  splitSlices eachChunk vec
+
+replaceLast : (a -> a) -> List a -> List a
+replaceLast fn vec =
+  case vec of
+    [] -> []
+    [a] -> [fn a]
+    head :: rest -> head :: replaceLast fn rest
+
 mapTupleSame3 : (a -> b) -> (a, a, a) -> (b, b, b)
 mapTupleSame3 fn (q, w, e) = (fn q, fn w, fn e)
 

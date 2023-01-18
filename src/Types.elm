@@ -35,7 +35,8 @@ type TasteType
   | TasteFunction
   | TasteBoolean
   | TasteString
-  | TasteList
+  | TasteListSignal -- only used internally
+  | TasteList TasteType
   
 -- TREE
 type InstructionLeaf

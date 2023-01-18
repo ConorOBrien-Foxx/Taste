@@ -30,8 +30,9 @@ atomToString atom =
       s
     
     TypeList l ->
-      List.map atomToString l
-        |> String.join " "
+      "[" ++ (
+        List.map atomToString l |> String.join " "
+      ) ++ "]"
     
     TypeFunction fn ->
       "{ ... }"

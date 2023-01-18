@@ -59,7 +59,7 @@ typeTree =
     --1
     Tree (
       --10
-      Leaf (TypeLeaf TasteList),
+      Leaf (TypeLeaf TasteListSignal),
       --11
       Tree (
         --110

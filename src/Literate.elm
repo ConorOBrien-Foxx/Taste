@@ -38,7 +38,7 @@ getInstruction op =
     "B" -> TypeLeaf TasteBoolean
     "F" -> TypeLeaf TasteFunction
     "S" -> TypeLeaf TasteString
-    "L" -> TypeLeaf TasteList
+    "L" -> TypeLeaf TasteListSignal
     
     _ -> OpLeaf UnknownOp
 

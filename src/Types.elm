@@ -13,6 +13,9 @@ type TasteData
   | RegY
   | RegZ
   | Function
+  | Context
+  | Operator
+  | VectorOperator
   | Input
   | UnknownData
 
@@ -25,7 +28,10 @@ type TasteOperation
   | Range
   | Equality
   | Terminate
+  | SaveY
   | SaveZ
+  | Separator
+  | Cast
   | BaseOperation -- the one at the start
   -- TODO: factor out UnknownData and UnknownOp
   | UnknownOp

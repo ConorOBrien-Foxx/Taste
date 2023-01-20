@@ -81,7 +81,12 @@ opTree =
     --0
     Tree (
       --00
-      Leaf (OpLeaf SaveZ),
+      Tree (
+        --000
+        Leaf (OpLeaf SaveY),
+        --001
+        Leaf (OpLeaf SaveZ)
+      ),
       --01
       Tree (
         --010
@@ -107,13 +112,18 @@ opTree =
       --11
       Tree (
         --110
-        Leaf (OpLeaf Modulo),
+        Tree (
+        --1100
+          Leaf (OpLeaf Modulo),
+          --1101
+          Leaf (OpLeaf Cast)
+        ),
         --111
         Tree (
           --1110
           Leaf (OpLeaf Equality),
           --1111
-          Leaf (OpLeaf UnknownOp)
+          Leaf (OpLeaf Separator)
         )
       )
     )
@@ -141,7 +151,12 @@ dataTree =
     --1
     Tree (
       --10
-      Leaf (DataLeaf Function),
+      Tree (
+        --100
+        Leaf (DataLeaf Function),
+        --101
+        Leaf (DataLeaf Context)
+      ),
       --11
       Tree (
         --110
@@ -160,9 +175,19 @@ dataTree =
             --11110
             Tree (
               --111100
-              Leaf (DataLeaf Three),
+              Tree (
+                --1111000
+                Leaf (DataLeaf Operator),
+                --1111001
+                Leaf (DataLeaf VectorOperator)
+              ),
               --111101
-              Leaf (DataLeaf Four)
+              Tree (
+                --1111010
+                Leaf (DataLeaf Three),
+                --1111011
+                Leaf (DataLeaf Four)
+              )
             ),
             --11111
             Tree (

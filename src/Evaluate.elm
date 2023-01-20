@@ -22,8 +22,8 @@ defaultState input =
   , typeStack = []
   , input = input
   , x = TypeInteger 0
-  , y = TypeInteger 100
-  , z = TypeInteger 16
+  , y = TypeInteger 1
+  , z = TypeInteger 0
   }
 
 -- permutes into stack-friendly order
@@ -34,10 +34,21 @@ type alias PermuteState =
   , leaves : List InstructionLeaf
   }
 
+substepPermute : InstructionLeaf -> List InstructionLeaf -> PermuteState -> PermuteState
+substepPermute ins rest stateRest =
+  let
+    subState = permuteHelper { focusOp = Nothing, needsType = Nothing, build = [], leaves = rest }
+  in
+  { stateRest
+  | build = stateRest.build ++ [ ins ] ++ subState.build ++ [ OpLeaf Terminate ]
+  , leaves = subState.leaves
+  }
+
 permuteHelper : PermuteState -> PermuteState
 permuteHelper state =
-  case state.leaves of
+  case (Util.debug "---------------------\nPERMUTE HELPER STATE\n\n" state) |> .leaves of
     [] -> case (state.focusOp, state.needsType) of
+      (Just x, Just (OpLeaf y)) -> { state | build = state.build ++ [ OpLeaf x, OpLeaf y ], needsType = Nothing }
       (Just x, Just y) -> { state | build = state.build ++ [ y, OpLeaf x ], needsType = Nothing }
       (Just x, Nothing) -> { state | build = state.build ++ [ OpLeaf x ] }
       (Nothing, Just y) -> { state | build = state.build ++ [ y ], needsType = Nothing }
@@ -58,18 +69,20 @@ permuteHelper state =
               _ -> { state | leaves = rest, build = state.build ++ [ typeIns ], needsType = Nothing }
           Nothing -> { state | leaves = rest }
         nextState = case ins of
+          DataLeaf Input -> { stateRest | needsType = Just ins }
+          DataLeaf Function -> substepPermute ins rest stateRest
+          DataLeaf Context -> substepPermute ins rest stateRest
+          OpLeaf Cast -> case stateRest.focusOp of
+            Just x ->
+              { stateRest
+              | needsType = Just ins
+              , focusOp = Nothing
+              , build = stateRest.build ++ [ OpLeaf x ]
+              }
+            Nothing -> { stateRest | needsType = Just ins }
           OpLeaf op -> case stateRest.focusOp of
             Just x ->  { stateRest | focusOp = Just op, build = stateRest.build ++ [ OpLeaf x ] }
             Nothing -> { stateRest | focusOp = Just op }
-          DataLeaf Input -> { stateRest | needsType = Just ins }
-          DataLeaf Function ->
-            let
-              subState = permuteHelper { focusOp = Nothing, needsType = Nothing, build = [], leaves = rest }
-            in
-            { stateRest
-            | build = stateRest.build ++ [ ins ] ++ subState.build ++ [ OpLeaf Terminate ]
-            , leaves = subState.leaves
-            }
           _ -> { stateRest | build = stateRest.build ++ [ ins ] }
       in
       permuteHelper nextState
@@ -212,10 +225,25 @@ evaluateInstruction state op =
         finalType = Maybe.withDefault TasteNumeric tasteType
         (element, nextInput) = parseInput finalType nextState.input
       in
-        { nextState
-        | input = nextInput
-        , stack = [ element ] ++ state.stack
-        }
+      { nextState
+      | input = nextInput
+      , stack = [ element ] ++ state.stack
+      }
+    OpLeaf Cast ->
+      let
+        (tasteType, nextState) = popType state
+        finalType = Maybe.withDefault TasteNumeric tasteType
+      in
+      case nextState.stack of
+        [] -> nextState
+        a :: rest ->
+          { nextState
+          | stack = [ convertTo finalType a ] ++ rest
+          }
+    OpLeaf SaveY ->
+      case state.stack of
+        [] -> state
+        a :: rest -> { state | y = a }
     OpLeaf SaveZ ->
       case state.stack of
         [] -> state
@@ -257,10 +285,15 @@ evaluateInstruction state op =
         -- apply N times
         TypeFunction fn :: TypeInteger n :: rest ->
           let
-            (returnState, mapped) = n - 1
-              |> List.range 0
-              |> List.map TypeInteger
-              |> stateMap fn state
+            (returnState, mapped) =
+              List.range 1 n
+                |> List.map TypeInteger
+                |> List.foldl
+                  (\el (inner, build) ->
+                    let (nextInner, atom) = evaluateToAtom fn inner
+                    in (nextInner, build ++ [ atom ])
+                  )
+                  (state, [])
           in
           (returnState, [ TypeList mapped ] ++ rest)
         second :: first :: rest ->
@@ -272,7 +305,7 @@ evaluateInstruction state op =
               (TypeBoolean a, TypeBoolean b) -> TypeBoolean (a && b)
               (a, b) -> mismatchError "Multiply" [a, b]
           in
-            (state, [ value ] ++ state.stack)
+          (state, [ value ] ++ rest)
     OpLeaf Divide ->
       applyStack <| case state.stack of
         [] ->
@@ -305,7 +338,7 @@ evaluateInstruction state op =
         TypeInteger b :: TypeInteger a :: rest ->
           (state, [ TypeInteger (if b == 0 then 0 else modBy b a) ] ++ rest)
         b :: a :: rest ->
-          (state, [ mismatchError "Add" [a, b] ] ++ rest)
+          (state, [ mismatchError "Modulo" [a, b] ] ++ rest)
     OpLeaf Equality ->
       applyStack <| case state.stack of
         [] ->
@@ -317,7 +350,17 @@ evaluateInstruction state op =
         TypeInteger b :: TypeInteger a :: rest ->
           (state, [ TypeBoolean (a == b) ] ++ rest)
         b :: a :: rest ->
-          (state, [ mismatchError "Add" [a, b] ] ++ rest)
+          (state, [ mismatchError "Equality" [a, b] ] ++ rest)
+    OpLeaf Separator ->
+      applyStack <| case state.stack of
+        [] ->
+          (state, [])
+        Error a :: rest ->
+          (state, state.stack)
+        [a] ->
+          (state, state.stack)
+        b :: a :: rest ->
+          (state, [ b ] ++ rest)
     OpLeaf Range ->
       { state
       | stack = case state.stack of
@@ -325,18 +368,23 @@ evaluateInstruction state op =
         Error a :: rest -> state.stack
         TypeInteger a :: rest ->
           [ TypeList (List.map TypeInteger (List.range 0 a)) ] ++ rest
+        TypeList v :: rest ->
+          [ TypeList (List.reverse v) ] ++ rest
+        TypeString s :: rest ->
+          [ TypeString (String.reverse s) ] ++ rest
         a :: rest -> [ Error "Unrecognized Type (Range)" ] ++ rest
       }
     -- UnknownOp -> state
     _ -> { state | stack = [ Error ("Unrecognized operator " ++ Debug.toString op) ] ++ state.stack }
 
 -- takes a list of instructions starting with the first character in the body
-readFunction : List InstructionLeaf -> (List InstructionLeaf, List InstructionLeaf, List InstructionLeaf)
-readFunction =
+readBalanced : List InstructionLeaf -> (List InstructionLeaf, List InstructionLeaf, List InstructionLeaf)
+readBalanced =
   Util.splitWhereMap
     (\depth -> depth == 0)
     (\op depth -> case op of
       DataLeaf Function -> depth + 1
+      DataLeaf Context -> depth + 1
       OpLeaf Terminate -> depth - 1
       _ -> depth
       )
@@ -348,9 +396,15 @@ evaluateStep ops state =
     [] -> state
     DataLeaf Function :: rest ->
       let
-        (fn, term, next) = readFunction rest
+        (fn, terminator, next) = readBalanced rest
       in
       evaluateStep next { state | stack = [ TypeFunction fn ] ++ state.stack }
+    DataLeaf Context :: rest ->
+      let
+        (fn, terminator, next) = readBalanced rest
+        innerState = evaluateStep fn state
+      in
+      evaluateStep next { innerState | stack = innerState.stack }
     op :: rest ->
       evaluateInstruction state op
         |> evaluateStep rest

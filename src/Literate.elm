@@ -25,7 +25,12 @@ getInstruction op =
     "y" -> DataLeaf RegY
     "z" -> DataLeaf RegZ
     "{" -> DataLeaf Function
-    "@" -> OpLeaf SaveZ
+    "(" -> DataLeaf Context
+    "o" -> DataLeaf Operator
+    -- TODO: this probably shouldn't be here (rather, should be operator forms)
+    "v" -> DataLeaf VectorOperator
+    "Y" -> OpLeaf SaveY
+    "Z" -> OpLeaf SaveZ
     "r" -> OpLeaf Range
     "+" -> OpLeaf Add
     "-" -> OpLeaf Subtract
@@ -33,7 +38,10 @@ getInstruction op =
     "*" -> OpLeaf Multiply
     "%" -> OpLeaf Modulo
     "=" -> OpLeaf Equality
+    "c" -> OpLeaf Cast
     "}" -> OpLeaf Terminate
+    ")" -> OpLeaf Terminate
+    ";" -> OpLeaf Separator
     "N" -> TypeLeaf TasteNumeric
     "B" -> TypeLeaf TasteBoolean
     "F" -> TypeLeaf TasteFunction

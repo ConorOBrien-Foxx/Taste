@@ -33,7 +33,10 @@ arityOf op =
     Multiply -> 2
     Divide -> 2
     Modulo -> 2
+    Separator -> 2
+    Cast -> 1
     Equality -> 2
+    SaveY -> 1
     SaveZ -> 1
     BaseOperation -> 1
     Terminate -> 0
@@ -74,6 +77,9 @@ getDataType state dat =
     Five -> TasteNumeric
     Ten -> TasteNumeric
     Function -> TasteFunction
+    Context -> TasteNumeric -- TOOD: variable type
+    Operator -> TasteFunction
+    VectorOperator -> TasteFunction
     Input ->
       state.typeStack
       |> Util.lastElement
@@ -137,7 +143,7 @@ decodeStep state =
       -- Reiterate with...
       decodeStep (
       -- Special Case: Function starts a new chain
-      if leaf == DataLeaf Function
+      if leaf == DataLeaf Function || leaf == DataLeaf Context
       then
         let
           subStep = 
@@ -149,7 +155,7 @@ decodeStep state =
           , result = nextState.result ++ [ leaf ] ++ subStep.result ++ [ OpLeaf Terminate ]
           }
       -- Special Case: Accept Type
-      else if leaf == DataLeaf Input
+      else if leaf == DataLeaf Input || leaf == OpLeaf Cast
       then
         let
           subStep = decodeStep (newParseState typeTree state.bits)

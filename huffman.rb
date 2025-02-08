@@ -36,6 +36,8 @@ codes = [
   "iNZcSrcN*z",
   # factorial (5b)
   "iNr+{x+1}/o*",
+  # increment away from zero (4.875b)
+  "iN?{x+1}{x-1"
 ]
 unused = [
   # fibonacci (list of first N) (4.125b)

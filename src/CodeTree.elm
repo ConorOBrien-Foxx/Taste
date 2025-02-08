@@ -111,10 +111,20 @@ opTree =
       Tree (
         --110
         Tree (
-        --1100
+          --1100
           Leaf (OpLeaf Modulo),
           --1101
-          Leaf (OpLeaf Cast)
+          Tree (
+            --11010
+            Leaf (OpLeaf Subtract),
+            --11011
+            Tree (
+              --110110
+              Leaf (OpLeaf TernaryCondition),
+              --110111
+              Leaf (OpLeaf Cast)
+            )     
+          )
         ),
         --111
         Tree (

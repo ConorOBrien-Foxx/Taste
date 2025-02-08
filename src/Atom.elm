@@ -34,7 +34,6 @@ atomToString atom =
         List.map atomToString l |> String.join " "
       ) ++ "]"
     
-    -- TODO: better function representation?
     TypeFunction fn ->
       "{ " ++ String.join " " (List.map Types.leafToString fn) ++ " }"
     
@@ -55,3 +54,14 @@ convertTo target atom =
     (Types.TasteString, TypeInteger int) ->
       TypeString (String.fromInt int)
     (a, b) -> Error ("Cannot perform conversion " ++ (Debug.toString b) ++ " -> " ++ (Debug.toString a))
+
+truthiness : Atom -> Atom
+truthiness atom =
+  case atom of
+    TypeInteger i -> TypeBoolean (i > 0)
+    TypeFloat f -> TypeBoolean (f > 0)
+    TypeBoolean b -> TypeBoolean b
+    TypeString s -> TypeBoolean (String.length(s) > 0)
+    TypeList l -> TypeBoolean (List.length(l) > 0)
+    TypeFunction _ -> TypeBoolean True
+    Error _ -> atom

@@ -9,6 +9,7 @@ type alias Token =
   , ins : InstructionLeaf
   }
 
+-- TODO: Return Maybe (InstructionLeaf)
 getInstruction : String -> InstructionLeaf
 getInstruction op =
   case op of
@@ -39,6 +40,7 @@ getInstruction op =
     "%" -> OpLeaf Modulo
     "=" -> OpLeaf Equality
     "c" -> OpLeaf Cast
+    "?" -> OpLeaf TernaryCondition
     "}" -> OpLeaf Terminate
     ")" -> OpLeaf Terminate
     ";" -> OpLeaf Separator

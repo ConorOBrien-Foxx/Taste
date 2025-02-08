@@ -314,6 +314,7 @@ evaluateInstruction state op =
       case state.stack of
         [] -> state
         a :: _ -> { state | z = a }
+    -- TODO: work with floats
     OpLeaf Add ->
       applyStack <| case state.stack of
         [] ->
@@ -340,6 +341,19 @@ evaluateInstruction state op =
           (state, TypeList (arr ++ [ any ]) :: rest)
         b :: a :: rest ->
           (state, mismatchError "Add" [a, b] :: rest)
+    OpLeaf Subtract ->
+      applyStack <| case state.stack of
+        [] ->
+          (state, [])
+        Error _ :: _ ->
+          (state, state.stack)
+        [_] ->
+          (state, [ Error "Insufficient Arguments" ])
+        -- subtract
+        TypeInteger b :: TypeInteger a :: rest ->
+          (state, TypeInteger (a - b) :: rest)
+        b :: a :: rest ->
+          (state, mismatchError "Subtract" [a, b] :: rest)
     OpLeaf Multiply ->
       applyStack <| case state.stack of
         [] ->
@@ -355,9 +369,9 @@ evaluateInstruction state op =
               List.range 1 n
                 |> List.map TypeInteger
                 |> List.foldl
-                  (\_ (inner, build) ->
-                    let (nextInner, atom) = evaluateToAtom fn inner
-                    in (nextInner, build ++ [ atom ])
+                  (\_ (innerState, build) ->
+                    let (nextInnerState, atom) = evaluateToAtom fn innerState
+                    in (nextInnerState, build ++ [ atom ])
                   )
                   (state, [])
           in
@@ -440,6 +454,31 @@ evaluateInstruction state op =
           TypeString (String.reverse s) :: rest
         _ :: rest -> Error "Unrecognized Type (Range)" :: rest
       }
+    OpLeaf TernaryCondition ->
+      applyStack <| case state.stack of
+        [] ->
+          (state, [])
+        Error _ :: _ ->
+          (state, state.stack)
+        [_] ->
+          (state, [ Error "Insufficient Arguments" ])
+        [_, _] ->
+          (state, [ Error "Insufficient Arguments" ])
+        TypeFunction c :: TypeFunction b :: a :: rest ->
+          let
+            truth = truthiness a
+            (nextState, nextResult) = case truth of
+              TypeBoolean True  -> evaluateAt b state a
+              TypeBoolean False -> evaluateAt c state a
+              Error _ -> (state, a)
+              _ -> (state, Error "Unexpected truthiness conversion type")
+          in
+          (nextState, case nextResult of
+            Error _ -> [ nextResult ]
+            _ -> nextResult :: rest
+          )
+        c :: b :: a :: rest ->
+          (state, mismatchError "TernaryCondition" [a, b, c] :: rest)
     -- UnknownOp -> state
     _ -> { state | stack = Error ("Unrecognized operator " ++ Debug.toString op) :: state.stack }
 

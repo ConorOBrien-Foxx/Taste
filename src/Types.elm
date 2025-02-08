@@ -34,6 +34,7 @@ type TasteOperation
   | SaveZ
   | Separator
   | Cast
+  | TernaryCondition
   | BaseOperation -- the one at the start
   -- TODO: factor out UnknownData and UnknownOp
   | UnknownOp
@@ -89,6 +90,7 @@ leafToString leaf =
         SaveZ -> "Z"
         Separator -> ";"
         Cast -> "c"
+        TernaryCondition -> "?"
         BaseOperation -> "(BaseOperation)"
         UnknownOp -> "(UnknownOp)"
     TypeLeaf typ ->

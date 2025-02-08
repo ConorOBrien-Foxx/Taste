@@ -40,6 +40,7 @@ arityOf op =
     Equality -> 2
     SaveY -> 1
     SaveZ -> 1
+    TernaryCondition -> 3
     BaseOperation -> 1
     Terminate -> 0
     UnknownOp -> 0

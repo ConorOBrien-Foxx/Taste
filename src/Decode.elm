@@ -88,8 +88,6 @@ getDataType state dat =
       state.typeStack
       |> Util.lastElement
       |> Maybe.withDefault TasteNumeric
-    UnknownData -> TasteNumeric -- TODO: unknown/maybe type
-
 
 decodeLeaf : ParseState -> InstructionLeaf -> ParseState
 decodeLeaf state leaf =

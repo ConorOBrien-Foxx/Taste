@@ -19,7 +19,6 @@ type TasteData
   | VectorOperatorSignal
   | VectorOperator TasteOperation
   | Input
-  | UnknownData
 
 type TasteOperation
   = Add
@@ -73,7 +72,6 @@ leafToString leaf =
         VectorOperatorSignal -> "v?"
         VectorOperator (op) -> "v" ++ leafToString (OpLeaf op)
         Input -> "i?"
-        UnknownData -> "(UnknownData)"
     OpLeaf op ->
       case op of
         Add -> "+"

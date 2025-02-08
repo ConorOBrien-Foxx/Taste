@@ -3294,10 +3294,8 @@ var $author$project$Types$leafToString = function (leaf) {
 					var op = data.a;
 					return 'v' + $author$project$Types$leafToString(
 						$author$project$Types$OpLeaf(op));
-				case 'Input':
-					return 'i?';
 				default:
-					return '(UnknownData)';
+					return 'i?';
 			}
 		case 'OpLeaf':
 			var op = leaf.a;
@@ -3328,10 +3326,8 @@ var $author$project$Types$leafToString = function (leaf) {
 					return 'c';
 				case 'TernaryCondition':
 					return '?';
-				case 'BaseOperation':
-					return '(BaseOperation)';
 				default:
-					return '(UnknownOp)';
+					return '(BaseOperation)';
 			}
 		default:
 			var typ = leaf.a;
@@ -3586,13 +3582,11 @@ var $author$project$Decode$getDataType = F2(
 				return $author$project$Types$TasteFunction;
 			case 'VectorOperator':
 				return $author$project$Types$TasteFunction;
-			case 'Input':
+			default:
 				return A2(
 					$elm$core$Maybe$withDefault,
 					$author$project$Types$TasteNumeric,
 					$author$project$Util$lastElement(state.typeStack));
-			default:
-				return $author$project$Types$TasteNumeric;
 		}
 	});
 var $author$project$Decode$arityOf = function (op) {
@@ -3623,8 +3617,6 @@ var $author$project$Decode$arityOf = function (op) {
 			return 3;
 		case 'BaseOperation':
 			return 1;
-		case 'Terminate':
-			return 0;
 		default:
 			return 0;
 	}
@@ -5943,7 +5935,7 @@ var $author$project$Evaluate$evaluate = F2(
 					tokens));
 		} else {
 			var token = tokenized.a;
-			return $author$project$Evaluate$TokenizationError('Unknown token ' + token);
+			return $author$project$Evaluate$TokenizationError('Unrecognized token \'' + (token + '\''));
 		}
 	});
 var $author$project$Taste$evaluate = F2(

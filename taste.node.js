@@ -14,7 +14,7 @@ const tasteEval = (input, _, __, callback) => {
     }
   );
   main.ports.get.send(input);
-}
+};
 
 if(process.argv[2]) {
   tasteEval(process.argv[2], null, null, (_, data) => console.log(data));

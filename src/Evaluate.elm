@@ -507,6 +507,7 @@ evaluateBits bits input =
 
 type EvaluationResult
   = Evaluation String
+  | TokenizationError String
   | InstructionNotFound String
 
 showCodeResult : String -> (List (List Int)) -> EvaluationResult
@@ -527,7 +528,11 @@ handleInstructions input tokens =
 
 evaluate : String -> String -> EvaluationResult
 evaluate code input =
-  code
-    |> Literate.tokenize
-    |> List.filter (\x -> x.raw /= " ")
-    |> handleInstructions input
+  let tokenized = Literate.tokenize code
+  in
+    case tokenized of
+      Tokens tokens ->
+        tokens
+          |> List.filter (\x -> x.raw /= " ")
+          |> handleInstructions input
+      UnknownToken token -> TokenizationError ("Unrecognized token '" ++ token ++ "'")

@@ -36,8 +36,6 @@ type TasteOperation
   | Cast
   | TernaryCondition
   | BaseOperation -- the one at the start
-  -- TODO: factor out UnknownData and UnknownOp
-  | UnknownOp
 
 type TasteType
   = TasteNumeric
@@ -92,7 +90,6 @@ leafToString leaf =
         Cast -> "c"
         TernaryCondition -> "?"
         BaseOperation -> "(BaseOperation)"
-        UnknownOp -> "(UnknownOp)"
     TypeLeaf typ ->
       case typ of
         TasteNumeric -> "N"

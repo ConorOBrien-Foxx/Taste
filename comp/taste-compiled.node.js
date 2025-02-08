@@ -2848,6 +2848,9 @@ var $author$project$NodeOp$subscriptions = function (_v0) {
 	return $author$project$NodeOp$get($author$project$NodeOp$Input);
 };
 var $elm$json$Json$Decode$succeed = _Json_succeed;
+var $author$project$Evaluate$TokenizationError = function (a) {
+	return {$: 'TokenizationError', a: a};
+};
 var $elm$core$List$foldrHelper = F4(
 	function (fn, acc, ctr, ls) {
 		if (!ls.b) {
@@ -5776,127 +5779,186 @@ var $author$project$Evaluate$handleInstructions = F2(
 		}
 	});
 var $elm$core$Basics$neq = _Utils_notEqual;
-var $author$project$Types$UnknownOp = {$: 'UnknownOp'};
+var $author$project$Literate$Tokens = function (a) {
+	return {$: 'Tokens', a: a};
+};
+var $author$project$Literate$UnknownToken = function (a) {
+	return {$: 'UnknownToken', a: a};
+};
 var $elm$core$String$cons = _String_cons;
 var $elm$core$String$fromChar = function (_char) {
 	return A2($elm$core$String$cons, _char, '');
 };
+var $author$project$Literate$Token = F2(
+	function (raw, ins) {
+		return {ins: ins, raw: raw};
+	});
 var $author$project$Literate$getInstruction = function (op) {
 	switch (op) {
 		case '0':
-			return $author$project$Types$DataLeaf($author$project$Types$Zero);
+			return $elm$core$Maybe$Just(
+				$author$project$Types$DataLeaf($author$project$Types$Zero));
 		case '1':
-			return $author$project$Types$DataLeaf($author$project$Types$One);
+			return $elm$core$Maybe$Just(
+				$author$project$Types$DataLeaf($author$project$Types$One));
 		case '2':
-			return $author$project$Types$DataLeaf($author$project$Types$Two);
+			return $elm$core$Maybe$Just(
+				$author$project$Types$DataLeaf($author$project$Types$Two));
 		case '3':
-			return $author$project$Types$DataLeaf($author$project$Types$Three);
+			return $elm$core$Maybe$Just(
+				$author$project$Types$DataLeaf($author$project$Types$Three));
 		case '4':
-			return $author$project$Types$DataLeaf($author$project$Types$Four);
+			return $elm$core$Maybe$Just(
+				$author$project$Types$DataLeaf($author$project$Types$Four));
 		case '5':
-			return $author$project$Types$DataLeaf($author$project$Types$Five);
+			return $elm$core$Maybe$Just(
+				$author$project$Types$DataLeaf($author$project$Types$Five));
 		case 't':
-			return $author$project$Types$DataLeaf($author$project$Types$Ten);
+			return $elm$core$Maybe$Just(
+				$author$project$Types$DataLeaf($author$project$Types$Ten));
 		case 'i':
-			return $author$project$Types$DataLeaf($author$project$Types$Input);
+			return $elm$core$Maybe$Just(
+				$author$project$Types$DataLeaf($author$project$Types$Input));
 		case 'x':
-			return $author$project$Types$DataLeaf($author$project$Types$RegX);
+			return $elm$core$Maybe$Just(
+				$author$project$Types$DataLeaf($author$project$Types$RegX));
 		case 'y':
-			return $author$project$Types$DataLeaf($author$project$Types$RegY);
+			return $elm$core$Maybe$Just(
+				$author$project$Types$DataLeaf($author$project$Types$RegY));
 		case 'z':
-			return $author$project$Types$DataLeaf($author$project$Types$RegZ);
+			return $elm$core$Maybe$Just(
+				$author$project$Types$DataLeaf($author$project$Types$RegZ));
 		case '{':
-			return $author$project$Types$DataLeaf($author$project$Types$Function);
+			return $elm$core$Maybe$Just(
+				$author$project$Types$DataLeaf($author$project$Types$Function));
 		case '(':
-			return $author$project$Types$DataLeaf($author$project$Types$Context);
+			return $elm$core$Maybe$Just(
+				$author$project$Types$DataLeaf($author$project$Types$Context));
 		case 'o':
-			return $author$project$Types$DataLeaf($author$project$Types$OperatorSignal);
+			return $elm$core$Maybe$Just(
+				$author$project$Types$DataLeaf($author$project$Types$OperatorSignal));
 		case 'v':
-			return $author$project$Types$DataLeaf($author$project$Types$VectorOperatorSignal);
+			return $elm$core$Maybe$Just(
+				$author$project$Types$DataLeaf($author$project$Types$VectorOperatorSignal));
 		case 'Y':
-			return $author$project$Types$OpLeaf($author$project$Types$SaveY);
+			return $elm$core$Maybe$Just(
+				$author$project$Types$OpLeaf($author$project$Types$SaveY));
 		case 'Z':
-			return $author$project$Types$OpLeaf($author$project$Types$SaveZ);
+			return $elm$core$Maybe$Just(
+				$author$project$Types$OpLeaf($author$project$Types$SaveZ));
 		case 'r':
-			return $author$project$Types$OpLeaf($author$project$Types$Range);
+			return $elm$core$Maybe$Just(
+				$author$project$Types$OpLeaf($author$project$Types$Range));
 		case '+':
-			return $author$project$Types$OpLeaf($author$project$Types$Add);
+			return $elm$core$Maybe$Just(
+				$author$project$Types$OpLeaf($author$project$Types$Add));
 		case '-':
-			return $author$project$Types$OpLeaf($author$project$Types$Subtract);
+			return $elm$core$Maybe$Just(
+				$author$project$Types$OpLeaf($author$project$Types$Subtract));
 		case '/':
-			return $author$project$Types$OpLeaf($author$project$Types$Divide);
+			return $elm$core$Maybe$Just(
+				$author$project$Types$OpLeaf($author$project$Types$Divide));
 		case '*':
-			return $author$project$Types$OpLeaf($author$project$Types$Multiply);
+			return $elm$core$Maybe$Just(
+				$author$project$Types$OpLeaf($author$project$Types$Multiply));
 		case '%':
-			return $author$project$Types$OpLeaf($author$project$Types$Modulo);
+			return $elm$core$Maybe$Just(
+				$author$project$Types$OpLeaf($author$project$Types$Modulo));
 		case '=':
-			return $author$project$Types$OpLeaf($author$project$Types$Equality);
+			return $elm$core$Maybe$Just(
+				$author$project$Types$OpLeaf($author$project$Types$Equality));
 		case 'c':
-			return $author$project$Types$OpLeaf($author$project$Types$Cast);
+			return $elm$core$Maybe$Just(
+				$author$project$Types$OpLeaf($author$project$Types$Cast));
 		case '?':
-			return $author$project$Types$OpLeaf($author$project$Types$TernaryCondition);
+			return $elm$core$Maybe$Just(
+				$author$project$Types$OpLeaf($author$project$Types$TernaryCondition));
 		case '}':
-			return $author$project$Types$OpLeaf($author$project$Types$Terminate);
+			return $elm$core$Maybe$Just(
+				$author$project$Types$OpLeaf($author$project$Types$Terminate));
 		case ')':
-			return $author$project$Types$OpLeaf($author$project$Types$Terminate);
+			return $elm$core$Maybe$Just(
+				$author$project$Types$OpLeaf($author$project$Types$Terminate));
 		case ';':
-			return $author$project$Types$OpLeaf($author$project$Types$Separator);
+			return $elm$core$Maybe$Just(
+				$author$project$Types$OpLeaf($author$project$Types$Separator));
 		case 'N':
-			return $author$project$Types$TypeLeaf($author$project$Types$TasteNumeric);
+			return $elm$core$Maybe$Just(
+				$author$project$Types$TypeLeaf($author$project$Types$TasteNumeric));
 		case 'B':
-			return $author$project$Types$TypeLeaf($author$project$Types$TasteBoolean);
+			return $elm$core$Maybe$Just(
+				$author$project$Types$TypeLeaf($author$project$Types$TasteBoolean));
 		case 'F':
-			return $author$project$Types$TypeLeaf($author$project$Types$TasteFunction);
+			return $elm$core$Maybe$Just(
+				$author$project$Types$TypeLeaf($author$project$Types$TasteFunction));
 		case 'S':
-			return $author$project$Types$TypeLeaf($author$project$Types$TasteString);
+			return $elm$core$Maybe$Just(
+				$author$project$Types$TypeLeaf($author$project$Types$TasteString));
 		case 'L':
-			return $author$project$Types$TypeLeaf($author$project$Types$TasteListSignal);
+			return $elm$core$Maybe$Just(
+				$author$project$Types$TypeLeaf($author$project$Types$TasteListSignal));
 		default:
-			return $author$project$Types$OpLeaf($author$project$Types$UnknownOp);
+			return $elm$core$Maybe$Nothing;
 	}
 };
-var $author$project$Literate$tokenize = function (code) {
+var $author$project$Literate$tokenFor = function (raw) {
 	return A2(
-		$elm$core$List$filter,
-		function (tok) {
-			return !_Utils_eq(
-				tok.ins,
-				$author$project$Types$OpLeaf($author$project$Types$UnknownOp));
-		},
+		$elm$core$Maybe$map,
+		$author$project$Literate$Token(raw),
+		$author$project$Literate$getInstruction(raw));
+};
+var $author$project$Literate$tokenize = function (code) {
+	var tokens = A2(
+		$author$project$Util$coalesceMap,
+		$author$project$Literate$tokenFor,
 		A2(
 			$elm$core$List$map,
-			function (x) {
-				return {
-					ins: $author$project$Literate$getInstruction(x),
-					raw: x
-				};
-			},
+			$elm$core$String$fromChar,
+			$elm$core$String$toList(code)));
+	if (tokens.$ === 'Coalesced') {
+		var coalesced = tokens.a;
+		return $author$project$Literate$Tokens(coalesced);
+	} else {
+		var offenders = tokens.a;
+		return $author$project$Literate$UnknownToken(
 			A2(
-				$elm$core$List$map,
-				$elm$core$String$fromChar,
-				$elm$core$String$toList(code))));
+				$elm$core$Maybe$withDefault,
+				'(no tokens found)',
+				$elm$core$List$head(offenders)));
+	}
 };
 var $author$project$Evaluate$evaluate = F2(
 	function (code, input) {
-		return A2(
-			$author$project$Evaluate$handleInstructions,
-			input,
-			A2(
-				$elm$core$List$filter,
-				function (x) {
-					return x.raw !== ' ';
-				},
-				$author$project$Literate$tokenize(code)));
+		var tokenized = $author$project$Literate$tokenize(code);
+		if (tokenized.$ === 'Tokens') {
+			var tokens = tokenized.a;
+			return A2(
+				$author$project$Evaluate$handleInstructions,
+				input,
+				A2(
+					$elm$core$List$filter,
+					function (x) {
+						return x.raw !== ' ';
+					},
+					tokens));
+		} else {
+			var token = tokenized.a;
+			return $author$project$Evaluate$TokenizationError('Unknown token ' + token);
+		}
 	});
 var $author$project$Taste$evaluate = F2(
 	function (code, input) {
 		var _v0 = A2($author$project$Evaluate$evaluate, code, input);
-		if (_v0.$ === 'Evaluation') {
-			var str = _v0.a;
-			return str;
-		} else {
-			var msg = _v0.a;
-			return 'Something went wrong: ' + msg;
+		switch (_v0.$) {
+			case 'Evaluation':
+				var str = _v0.a;
+				return str;
+			case 'InstructionNotFound':
+				var msg = _v0.a;
+				return 'Something went wrong: ' + msg;
+			default:
+				var msg = _v0.a;
+				return 'Something went wrong while tokenizing: ' + msg;
 		}
 	});
 var $elm$json$Json$Encode$string = _Json_wrap;

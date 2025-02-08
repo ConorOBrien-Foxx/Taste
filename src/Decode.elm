@@ -43,7 +43,6 @@ arityOf op =
     TernaryCondition -> 3
     BaseOperation -> 1
     Terminate -> 0
-    UnknownOp -> 0
 
 isDone : TasteOperation -> List TasteType -> Bool
 isDone op types =

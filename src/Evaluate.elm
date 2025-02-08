@@ -413,32 +413,52 @@ evaluateInstruction state op =
     -- UnknownOp -> state
     _ -> { state | stack = Error ("Unrecognized operator " ++ Debug.toString op) :: state.stack }
 
-evaluate : String -> String -> String
+showDiagnosticForBits : (List (List Int)) -> String
+showDiagnosticForBits bits =
+  let bitCount = List.length <| Util.flatten bits
+    in
+    -- TODO: Remove Debug.toString, as this is not available in production
+    (bits |> List.map (List.map Debug.toString >> String.join "") |> String.join "│")
+    ++ " (" ++ String.fromInt bitCount ++ " bit(s), "
+    ++ String.fromFloat (toFloat bitCount / 8.0) ++ " byte(s))"
+
+evaluateBits : (List Int) -> String -> String
+evaluateBits bits input =
+  bits
+  |> Util.debug "Before decode\n"
+  |> Decode.decode
+  |> Util.debug "Before permute\n"
+  |> permute
+  |> Util.debug "Before evaluation\n"
+  |> (\tokens -> evaluateStep tokens (defaultState input))
+  |> .stack
+  -- TODO: Remove Debug.toString / join for release?
+  |> List.map (\y -> atomToString y ++ "\n" ++ Debug.toString y)
+  |> String.join "\n--------------\n"
+
+type EvaluationResult
+  = Evaluation String
+  | InstructionNotFound String
+
+showCodeResult : String -> (List (List Int)) -> EvaluationResult
+showCodeResult input bits =
+  Evaluation (showDiagnosticForBits bits ++ "\n==============\n" ++ evaluateBits (Util.flatten bits) input)
+
+handleInstructions : (String) -> (List Token) -> EvaluationResult
+handleInstructions input tokens =
+  case Util.coalesceMap (CodeTree.invertInstruction << (\token -> token.ins)) tokens of
+    Util.Coalesced bitRepresentations ->
+      showCodeResult input bitRepresentations
+    Util.Offenders offenders ->
+      InstructionNotFound ("Not all tokens were given bit representations: " ++ (
+        String.join
+          ", "
+          (List.map (\token -> "'" ++ token.raw ++ "'") offenders)
+      ))
+
+evaluate : String -> String -> EvaluationResult
 evaluate code input =
   code
     |> Literate.tokenize
     |> List.filter (\x -> x.raw /= " ")
-    |> List.map .ins
-    |> (\x -> (x, x))
-    |> Tuple.mapFirst (
-      List.map CodeTree.invertInstruction
-      >> (\bits ->
-        let bitCount = List.length <| Util.flatten bits
-        in
-        -- TODO: Remove Debug.toString, as this is not available in production
-        (bits |> List.map (List.map Debug.toString >> String.join "") |> String.join "│")
-        ++ " (" ++ String.fromInt bitCount ++ " bit(s), "
-        ++ String.fromFloat (toFloat bitCount / 8.0) ++ " byte(s))")
-      )
-    |> Tuple.mapSecond (\x -> x
-      |> List.concatMap CodeTree.invertInstruction
-      |> Util.debug "Before decode\n"
-      |> Decode.decode
-      |> Util.debug "Before permute\n"
-      |> permute
-      |> Util.debug "Before evaluation\n"
-      |> (\tokens -> evaluateStep tokens (defaultState input))
-      |> .stack
-      |> List.map (\y -> atomToString y ++ "\n" ++ Debug.toString y)
-      |> String.join "\n--------------\n")
-    |> (\x -> Tuple.first x ++ "\n==============\n" ++ Tuple.second x)
+    |> handleInstructions input

@@ -2848,7 +2848,6 @@ var $author$project$NodeOp$subscriptions = function (_v0) {
 	return $author$project$NodeOp$get($author$project$NodeOp$Input);
 };
 var $elm$json$Json$Decode$succeed = _Json_succeed;
-var $elm$core$String$fromFloat = _String_fromNumber;
 var $elm$core$List$foldrHelper = F4(
 	function (fn, acc, ctr, ls) {
 		if (!ls.b) {
@@ -2904,6 +2903,67 @@ var $elm$core$List$foldr = F3(
 	function (fn, acc, ls) {
 		return A4($elm$core$List$foldrHelper, fn, acc, 0, ls);
 	});
+var $elm$core$List$filter = F2(
+	function (isGood, list) {
+		return A3(
+			$elm$core$List$foldr,
+			F2(
+				function (x, xs) {
+					return isGood(x) ? A2($elm$core$List$cons, x, xs) : xs;
+				}),
+			_List_Nil,
+			list);
+	});
+var $author$project$Evaluate$InstructionNotFound = function (a) {
+	return {$: 'InstructionNotFound', a: a};
+};
+var $author$project$Util$Coalesced = function (a) {
+	return {$: 'Coalesced', a: a};
+};
+var $author$project$Util$Offenders = function (a) {
+	return {$: 'Offenders', a: a};
+};
+var $elm$core$List$maybeCons = F3(
+	function (f, mx, xs) {
+		var _v0 = f(mx);
+		if (_v0.$ === 'Just') {
+			var x = _v0.a;
+			return A2($elm$core$List$cons, x, xs);
+		} else {
+			return xs;
+		}
+	});
+var $elm$core$List$filterMap = F2(
+	function (f, xs) {
+		return A3(
+			$elm$core$List$foldr,
+			$elm$core$List$maybeCons(f),
+			_List_Nil,
+			xs);
+	});
+var $author$project$Util$keepIfNothing = F2(
+	function (b, a) {
+		if (a.$ === 'Nothing') {
+			return $elm$core$Maybe$Just(b);
+		} else {
+			return $elm$core$Maybe$Nothing;
+		}
+	});
+var $author$project$Util$noteOffenders = F2(
+	function (maybes, original) {
+		return A2(
+			$elm$core$List$filterMap,
+			$elm$core$Basics$identity,
+			A3($elm$core$List$map2, $author$project$Util$keepIfNothing, original, maybes));
+	});
+var $author$project$Util$coalesceMaybe = F2(
+	function (maybes, original) {
+		var justs = A2($elm$core$List$filterMap, $elm$core$Basics$identity, maybes);
+		return _Utils_eq(
+			$elm$core$List$length(justs),
+			$elm$core$List$length(original)) ? $author$project$Util$Coalesced(justs) : $author$project$Util$Offenders(
+			A2($author$project$Util$noteOffenders, maybes, original));
+	});
 var $elm$core$List$map = F2(
 	function (f, xs) {
 		return A3(
@@ -2918,64 +2978,17 @@ var $elm$core$List$map = F2(
 			_List_Nil,
 			xs);
 	});
-var $author$project$Atom$atomToString = function (atom) {
-	switch (atom.$) {
-		case 'TypeInteger':
-			var i = atom.a;
-			return $elm$core$String$fromInt(i);
-		case 'TypeFloat':
-			var f = atom.a;
-			return $elm$core$String$fromFloat(f);
-		case 'TypeBoolean':
-			var b = atom.a;
-			return b ? 'true' : 'false';
-		case 'TypeString':
-			var s = atom.a;
-			return s;
-		case 'TypeList':
-			var l = atom.a;
-			return '[' + (A2(
-				$elm$core$String$join,
-				' ',
-				A2($elm$core$List$map, $author$project$Atom$atomToString, l)) + ']');
-		case 'TypeFunction':
-			return '{ ... }';
-		default:
-			var s = atom.a;
-			return 'Error: ' + s;
-	}
-};
-var $elm$core$Basics$composeR = F3(
-	function (f, g, x) {
+var $author$project$Util$coalesceMap = F2(
+	function (fn, list) {
+		return A2(
+			$author$project$Util$coalesceMaybe,
+			A2($elm$core$List$map, fn, list),
+			list);
+	});
+var $elm$core$Basics$composeL = F3(
+	function (g, f, x) {
 		return g(
 			f(x));
-	});
-var $elm$core$List$append = F2(
-	function (xs, ys) {
-		if (!ys.b) {
-			return xs;
-		} else {
-			return A3($elm$core$List$foldr, $elm$core$List$cons, ys, xs);
-		}
-	});
-var $elm$core$List$concat = function (lists) {
-	return A3($elm$core$List$foldr, $elm$core$List$append, _List_Nil, lists);
-};
-var $elm$core$List$concatMap = F2(
-	function (f, list) {
-		return $elm$core$List$concat(
-			A2($elm$core$List$map, f, list));
-	});
-var $elm$core$Debug$log = _Debug_log;
-var $elm$core$Tuple$second = function (_v0) {
-	var y = _v0.b;
-	return y;
-};
-var $author$project$Util$debug = F2(
-	function (msg, value) {
-		return _Utils_Tuple2(
-			A2($elm$core$Debug$log, msg, value),
-			value).b;
 	});
 var $author$project$Types$Context = {$: 'Context'};
 var $author$project$Types$DataLeaf = function (a) {
@@ -3059,17 +3072,210 @@ var $author$project$CodeTree$dataTree = $author$project$CodeTree$Tree(
 													$author$project$Types$DataLeaf($author$project$Types$Five)),
 												$author$project$CodeTree$Leaf(
 													$author$project$Types$DataLeaf($author$project$Types$Ten))))))))))))));
+var $elm$core$Tuple$second = function (_v0) {
+	var y = _v0.b;
+	return y;
+};
+var $author$project$CodeTree$invertCodeTreeHelper = F2(
+	function (path, ct) {
+		if (ct.$ === 'Leaf') {
+			var leaf = ct.a;
+			return _List_fromArray(
+				[
+					_Utils_Tuple2(path, leaf)
+				]);
+		} else {
+			var tup = ct.a;
+			return _Utils_ap(
+				A2(
+					$author$project$CodeTree$invertCodeTreeHelper,
+					_Utils_ap(
+						path,
+						_List_fromArray(
+							[0])),
+					tup.a),
+				A2(
+					$author$project$CodeTree$invertCodeTreeHelper,
+					_Utils_ap(
+						path,
+						_List_fromArray(
+							[1])),
+					tup.b));
+		}
+	});
+var $author$project$CodeTree$invertCodeTree = function (ct) {
+	return A2($author$project$CodeTree$invertCodeTreeHelper, _List_Nil, ct);
+};
+var $author$project$CodeTree$inverseDataTree = $author$project$CodeTree$invertCodeTree($author$project$CodeTree$dataTree);
+var $author$project$Types$Add = {$: 'Add'};
 var $author$project$Types$Cast = {$: 'Cast'};
+var $author$project$Types$Divide = {$: 'Divide'};
+var $author$project$Types$Equality = {$: 'Equality'};
+var $author$project$Types$Modulo = {$: 'Modulo'};
+var $author$project$Types$Multiply = {$: 'Multiply'};
 var $author$project$Types$OpLeaf = function (a) {
 	return {$: 'OpLeaf', a: a};
 };
-var $author$project$Types$TasteList = function (a) {
-	return {$: 'TasteList', a: a};
-};
-var $author$project$Types$TasteNumeric = {$: 'TasteNumeric'};
+var $author$project$Types$Range = {$: 'Range'};
+var $author$project$Types$SaveY = {$: 'SaveY'};
+var $author$project$Types$SaveZ = {$: 'SaveZ'};
+var $author$project$Types$Separator = {$: 'Separator'};
 var $author$project$Types$Terminate = {$: 'Terminate'};
+var $author$project$CodeTree$opTree = $author$project$CodeTree$Tree(
+	_Utils_Tuple2(
+		$author$project$CodeTree$Tree(
+			_Utils_Tuple2(
+				$author$project$CodeTree$Tree(
+					_Utils_Tuple2(
+						$author$project$CodeTree$Leaf(
+							$author$project$Types$OpLeaf($author$project$Types$SaveY)),
+						$author$project$CodeTree$Leaf(
+							$author$project$Types$OpLeaf($author$project$Types$SaveZ)))),
+				$author$project$CodeTree$Tree(
+					_Utils_Tuple2(
+						$author$project$CodeTree$Leaf(
+							$author$project$Types$OpLeaf($author$project$Types$Add)),
+						$author$project$CodeTree$Leaf(
+							$author$project$Types$OpLeaf($author$project$Types$Terminate)))))),
+		$author$project$CodeTree$Tree(
+			_Utils_Tuple2(
+				$author$project$CodeTree$Tree(
+					_Utils_Tuple2(
+						$author$project$CodeTree$Leaf(
+							$author$project$Types$OpLeaf($author$project$Types$Multiply)),
+						$author$project$CodeTree$Tree(
+							_Utils_Tuple2(
+								$author$project$CodeTree$Leaf(
+									$author$project$Types$OpLeaf($author$project$Types$Divide)),
+								$author$project$CodeTree$Leaf(
+									$author$project$Types$OpLeaf($author$project$Types$Range)))))),
+				$author$project$CodeTree$Tree(
+					_Utils_Tuple2(
+						$author$project$CodeTree$Tree(
+							_Utils_Tuple2(
+								$author$project$CodeTree$Leaf(
+									$author$project$Types$OpLeaf($author$project$Types$Modulo)),
+								$author$project$CodeTree$Leaf(
+									$author$project$Types$OpLeaf($author$project$Types$Cast)))),
+						$author$project$CodeTree$Tree(
+							_Utils_Tuple2(
+								$author$project$CodeTree$Leaf(
+									$author$project$Types$OpLeaf($author$project$Types$Equality)),
+								$author$project$CodeTree$Leaf(
+									$author$project$Types$OpLeaf($author$project$Types$Separator))))))))));
+var $author$project$CodeTree$inverseOpTree = $author$project$CodeTree$invertCodeTree($author$project$CodeTree$opTree);
+var $author$project$Types$TasteBoolean = {$: 'TasteBoolean'};
+var $author$project$Types$TasteFunction = {$: 'TasteFunction'};
+var $author$project$Types$TasteListSignal = {$: 'TasteListSignal'};
+var $author$project$Types$TasteNumeric = {$: 'TasteNumeric'};
+var $author$project$Types$TasteString = {$: 'TasteString'};
 var $author$project$Types$TypeLeaf = function (a) {
 	return {$: 'TypeLeaf', a: a};
+};
+var $author$project$CodeTree$typeTree = $author$project$CodeTree$Tree(
+	_Utils_Tuple2(
+		$author$project$CodeTree$Leaf(
+			$author$project$Types$TypeLeaf($author$project$Types$TasteNumeric)),
+		$author$project$CodeTree$Tree(
+			_Utils_Tuple2(
+				$author$project$CodeTree$Leaf(
+					$author$project$Types$TypeLeaf($author$project$Types$TasteListSignal)),
+				$author$project$CodeTree$Tree(
+					_Utils_Tuple2(
+						$author$project$CodeTree$Tree(
+							_Utils_Tuple2(
+								$author$project$CodeTree$Leaf(
+									$author$project$Types$TypeLeaf($author$project$Types$TasteFunction)),
+								$author$project$CodeTree$Leaf(
+									$author$project$Types$TypeLeaf($author$project$Types$TasteBoolean)))),
+						$author$project$CodeTree$Leaf(
+							$author$project$Types$TypeLeaf($author$project$Types$TasteString))))))));
+var $author$project$CodeTree$inverseTypeTree = $author$project$CodeTree$invertCodeTree($author$project$CodeTree$typeTree);
+var $elm$core$List$head = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return $elm$core$Maybe$Just(x);
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
+};
+var $elm$core$Maybe$map = F2(
+	function (f, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return $elm$core$Maybe$Just(
+				f(value));
+		} else {
+			return $elm$core$Maybe$Nothing;
+		}
+	});
+var $author$project$CodeTree$invertFind = F2(
+	function (ict, leaf) {
+		return A2(
+			$elm$core$Maybe$map,
+			$elm$core$Tuple$first,
+			$elm$core$List$head(
+				A2(
+					$elm$core$List$filter,
+					function (x) {
+						return _Utils_eq(x.b, leaf);
+					},
+					ict)));
+	});
+var $author$project$CodeTree$invertInstruction = function (ins) {
+	var tree = function () {
+		switch (ins.$) {
+			case 'TypeLeaf':
+				return $author$project$CodeTree$inverseTypeTree;
+			case 'OpLeaf':
+				return $author$project$CodeTree$inverseOpTree;
+			default:
+				return $author$project$CodeTree$inverseDataTree;
+		}
+	}();
+	return A2($author$project$CodeTree$invertFind, tree, ins);
+};
+var $author$project$Evaluate$Evaluation = function (a) {
+	return {$: 'Evaluation', a: a};
+};
+var $elm$core$String$fromFloat = _String_fromNumber;
+var $author$project$Atom$atomToString = function (atom) {
+	switch (atom.$) {
+		case 'TypeInteger':
+			var i = atom.a;
+			return $elm$core$String$fromInt(i);
+		case 'TypeFloat':
+			var f = atom.a;
+			return $elm$core$String$fromFloat(f);
+		case 'TypeBoolean':
+			var b = atom.a;
+			return b ? 'true' : 'false';
+		case 'TypeString':
+			var s = atom.a;
+			return s;
+		case 'TypeList':
+			var l = atom.a;
+			return '[' + (A2(
+				$elm$core$String$join,
+				' ',
+				A2($elm$core$List$map, $author$project$Atom$atomToString, l)) + ']');
+		case 'TypeFunction':
+			return '{ ... }';
+		default:
+			var s = atom.a;
+			return 'Error: ' + s;
+	}
+};
+var $elm$core$Debug$log = _Debug_log;
+var $author$project$Util$debug = F2(
+	function (msg, value) {
+		return _Utils_Tuple2(
+			A2($elm$core$Debug$log, msg, value),
+			value).b;
+	});
+var $author$project$Types$TasteList = function (a) {
+	return {$: 'TasteList', a: a};
 };
 var $elm$core$List$takeReverse = F3(
 	function (n, list, kept) {
@@ -3204,28 +3410,14 @@ var $author$project$Util$dropLast = F2(
 			$elm$core$List$length(vec) - n,
 			vec);
 	});
-var $elm$core$List$maybeCons = F3(
-	function (f, mx, xs) {
-		var _v0 = f(mx);
-		if (_v0.$ === 'Just') {
-			var x = _v0.a;
-			return A2($elm$core$List$cons, x, xs);
-		} else {
-			return xs;
-		}
-	});
-var $elm$core$List$filterMap = F2(
-	function (f, xs) {
-		return A3(
-			$elm$core$List$foldr,
-			$elm$core$List$maybeCons(f),
-			_List_Nil,
-			xs);
-	});
-var $author$project$Types$TasteFunction = {$: 'TasteFunction'};
 var $elm$core$Basics$always = F2(
 	function (a, _v0) {
 		return a;
+	});
+var $elm$core$Basics$composeR = F3(
+	function (f, g, x) {
+		return g(
+			f(x));
 	});
 var $author$project$Util$lastElement = A2(
 	$elm$core$List$foldl,
@@ -3326,57 +3518,6 @@ var $author$project$Decode$newParseState = F2(
 	function (tree, bits) {
 		return {argList: _List_Nil, bits: bits, op: $author$project$Types$BaseOperation, result: _List_Nil, target: tree, typeStack: _List_Nil};
 	});
-var $author$project$Types$Add = {$: 'Add'};
-var $author$project$Types$Divide = {$: 'Divide'};
-var $author$project$Types$Equality = {$: 'Equality'};
-var $author$project$Types$Modulo = {$: 'Modulo'};
-var $author$project$Types$Multiply = {$: 'Multiply'};
-var $author$project$Types$Range = {$: 'Range'};
-var $author$project$Types$SaveY = {$: 'SaveY'};
-var $author$project$Types$SaveZ = {$: 'SaveZ'};
-var $author$project$Types$Separator = {$: 'Separator'};
-var $author$project$CodeTree$opTree = $author$project$CodeTree$Tree(
-	_Utils_Tuple2(
-		$author$project$CodeTree$Tree(
-			_Utils_Tuple2(
-				$author$project$CodeTree$Tree(
-					_Utils_Tuple2(
-						$author$project$CodeTree$Leaf(
-							$author$project$Types$OpLeaf($author$project$Types$SaveY)),
-						$author$project$CodeTree$Leaf(
-							$author$project$Types$OpLeaf($author$project$Types$SaveZ)))),
-				$author$project$CodeTree$Tree(
-					_Utils_Tuple2(
-						$author$project$CodeTree$Leaf(
-							$author$project$Types$OpLeaf($author$project$Types$Add)),
-						$author$project$CodeTree$Leaf(
-							$author$project$Types$OpLeaf($author$project$Types$Terminate)))))),
-		$author$project$CodeTree$Tree(
-			_Utils_Tuple2(
-				$author$project$CodeTree$Tree(
-					_Utils_Tuple2(
-						$author$project$CodeTree$Leaf(
-							$author$project$Types$OpLeaf($author$project$Types$Multiply)),
-						$author$project$CodeTree$Tree(
-							_Utils_Tuple2(
-								$author$project$CodeTree$Leaf(
-									$author$project$Types$OpLeaf($author$project$Types$Divide)),
-								$author$project$CodeTree$Leaf(
-									$author$project$Types$OpLeaf($author$project$Types$Range)))))),
-				$author$project$CodeTree$Tree(
-					_Utils_Tuple2(
-						$author$project$CodeTree$Tree(
-							_Utils_Tuple2(
-								$author$project$CodeTree$Leaf(
-									$author$project$Types$OpLeaf($author$project$Types$Modulo)),
-								$author$project$CodeTree$Leaf(
-									$author$project$Types$OpLeaf($author$project$Types$Cast)))),
-						$author$project$CodeTree$Tree(
-							_Utils_Tuple2(
-								$author$project$CodeTree$Leaf(
-									$author$project$Types$OpLeaf($author$project$Types$Equality)),
-								$author$project$CodeTree$Leaf(
-									$author$project$Types$OpLeaf($author$project$Types$Separator))))))))));
 var $author$project$Decode$returnType = F2(
 	function (op, types) {
 		var _v0 = _Utils_Tuple2(op, types);
@@ -3410,27 +3551,6 @@ var $author$project$Decode$returnType = F2(
 		}
 		return $author$project$Types$TasteNumeric;
 	});
-var $author$project$Types$TasteBoolean = {$: 'TasteBoolean'};
-var $author$project$Types$TasteListSignal = {$: 'TasteListSignal'};
-var $author$project$Types$TasteString = {$: 'TasteString'};
-var $author$project$CodeTree$typeTree = $author$project$CodeTree$Tree(
-	_Utils_Tuple2(
-		$author$project$CodeTree$Leaf(
-			$author$project$Types$TypeLeaf($author$project$Types$TasteNumeric)),
-		$author$project$CodeTree$Tree(
-			_Utils_Tuple2(
-				$author$project$CodeTree$Leaf(
-					$author$project$Types$TypeLeaf($author$project$Types$TasteListSignal)),
-				$author$project$CodeTree$Tree(
-					_Utils_Tuple2(
-						$author$project$CodeTree$Tree(
-							_Utils_Tuple2(
-								$author$project$CodeTree$Leaf(
-									$author$project$Types$TypeLeaf($author$project$Types$TasteFunction)),
-								$author$project$CodeTree$Leaf(
-									$author$project$Types$TypeLeaf($author$project$Types$TasteBoolean)))),
-						$author$project$CodeTree$Leaf(
-							$author$project$Types$TypeLeaf($author$project$Types$TasteString))))))));
 var $author$project$Decode$decodeStep = function (state) {
 	decodeStep:
 	while (true) {
@@ -3752,11 +3872,6 @@ var $author$project$Evaluate$newStateWithX = F2(
 var $author$project$Evaluate$newStateWithXY = F3(
 	function (state, x, y) {
 		return {input: state.input, stack: _List_Nil, typeStack: _List_Nil, x: x, y: y, z: state.z};
-	});
-var $elm$core$Basics$composeL = F3(
-	function (g, f, x) {
-		return g(
-			f(x));
 	});
 var $author$project$Evaluate$inputError = function (input) {
 	return _Utils_Tuple2(
@@ -4928,120 +5043,6 @@ var $author$project$Evaluate$stateMap = F2(
 				}),
 			_Utils_Tuple2(state, _List_Nil));
 	});
-var $elm$core$List$filter = F2(
-	function (isGood, list) {
-		return A3(
-			$elm$core$List$foldr,
-			F2(
-				function (x, xs) {
-					return isGood(x) ? A2($elm$core$List$cons, x, xs) : xs;
-				}),
-			_List_Nil,
-			list);
-	});
-var $author$project$Util$flatten = $elm$core$List$concatMap(
-	function (x) {
-		return x;
-	});
-var $author$project$CodeTree$invertCodeTreeHelper = F2(
-	function (path, ct) {
-		if (ct.$ === 'Leaf') {
-			var leaf = ct.a;
-			return _List_fromArray(
-				[
-					_Utils_Tuple2(path, leaf)
-				]);
-		} else {
-			var tup = ct.a;
-			return _Utils_ap(
-				A2(
-					$author$project$CodeTree$invertCodeTreeHelper,
-					_Utils_ap(
-						path,
-						_List_fromArray(
-							[0])),
-					tup.a),
-				A2(
-					$author$project$CodeTree$invertCodeTreeHelper,
-					_Utils_ap(
-						path,
-						_List_fromArray(
-							[1])),
-					tup.b));
-		}
-	});
-var $author$project$CodeTree$invertCodeTree = function (ct) {
-	return A2($author$project$CodeTree$invertCodeTreeHelper, _List_Nil, ct);
-};
-var $author$project$CodeTree$inverseDataTree = $author$project$CodeTree$invertCodeTree($author$project$CodeTree$dataTree);
-var $author$project$CodeTree$inverseOpTree = $author$project$CodeTree$invertCodeTree($author$project$CodeTree$opTree);
-var $author$project$CodeTree$inverseTypeTree = $author$project$CodeTree$invertCodeTree($author$project$CodeTree$typeTree);
-var $elm$core$List$head = function (list) {
-	if (list.b) {
-		var x = list.a;
-		var xs = list.b;
-		return $elm$core$Maybe$Just(x);
-	} else {
-		return $elm$core$Maybe$Nothing;
-	}
-};
-var $elm$core$Maybe$map = F2(
-	function (f, maybe) {
-		if (maybe.$ === 'Just') {
-			var value = maybe.a;
-			return $elm$core$Maybe$Just(
-				f(value));
-		} else {
-			return $elm$core$Maybe$Nothing;
-		}
-	});
-var $author$project$CodeTree$invertFind = F2(
-	function (ict, leaf) {
-		return A2(
-			$elm$core$Maybe$map,
-			$elm$core$Tuple$first,
-			$elm$core$List$head(
-				A2(
-					$elm$core$List$filter,
-					function (x) {
-						return _Utils_eq(x.b, leaf);
-					},
-					ict)));
-	});
-var $author$project$CodeTree$invertInstruction = function (ins) {
-	var tree = function () {
-		switch (ins.$) {
-			case 'TypeLeaf':
-				return $author$project$CodeTree$inverseTypeTree;
-			case 'OpLeaf':
-				return $author$project$CodeTree$inverseOpTree;
-			default:
-				return $author$project$CodeTree$inverseDataTree;
-		}
-	}();
-	return A2(
-		$elm$core$Maybe$withDefault,
-		_List_fromArray(
-			[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
-		A2($author$project$CodeTree$invertFind, tree, ins));
-};
-var $elm$core$Tuple$mapFirst = F2(
-	function (func, _v0) {
-		var x = _v0.a;
-		var y = _v0.b;
-		return _Utils_Tuple2(
-			func(x),
-			y);
-	});
-var $elm$core$Tuple$mapSecond = F2(
-	function (func, _v0) {
-		var x = _v0.a;
-		var y = _v0.b;
-		return _Utils_Tuple2(
-			x,
-			func(y));
-	});
-var $elm$core$Basics$neq = _Utils_notEqual;
 var $author$project$Evaluate$permuteHelper = function (state) {
 	permuteHelper:
 	while (true) {
@@ -5169,10 +5170,10 @@ var $author$project$Evaluate$permuteHelper = function (state) {
 											});
 									case 'Function':
 										var _v8 = ins.a;
-										return A3($author$project$Evaluate$substepPermute, ins, rest, stateRest);
+										return A3($author$project$Evaluate$subStepPermute, ins, rest, stateRest);
 									case 'Context':
 										var _v9 = ins.a;
-										return A3($author$project$Evaluate$substepPermute, ins, rest, stateRest);
+										return A3($author$project$Evaluate$subStepPermute, ins, rest, stateRest);
 									default:
 										break _v6$5;
 								}
@@ -5245,7 +5246,7 @@ var $author$project$Evaluate$permuteHelper = function (state) {
 		}
 	}
 };
-var $author$project$Evaluate$substepPermute = F3(
+var $author$project$Evaluate$subStepPermute = F3(
 	function (ins, rest, stateRest) {
 		var subState = $author$project$Evaluate$permuteHelper(
 			{build: _List_Nil, focusOp: $elm$core$Maybe$Nothing, leaves: rest, needsType: $elm$core$Maybe$Nothing});
@@ -5270,6 +5271,100 @@ var $author$project$Evaluate$permute = function (leaves) {
 	return $author$project$Evaluate$permuteHelper(
 		{build: _List_Nil, focusOp: $elm$core$Maybe$Nothing, leaves: leaves, needsType: $elm$core$Maybe$Nothing}).build;
 };
+var $author$project$Evaluate$evaluateBits = F2(
+	function (bits, input) {
+		return A2(
+			$elm$core$String$join,
+			'\n--------------\n',
+			A2(
+				$elm$core$List$map,
+				function (y) {
+					return $author$project$Atom$atomToString(y) + ('\n' + $elm$core$Debug$toString(y));
+				},
+				function (tokens) {
+					return A2(
+						$author$project$Evaluate$evaluateStep,
+						tokens,
+						$author$project$Evaluate$defaultState(input));
+				}(
+					A2(
+						$author$project$Util$debug,
+						'Before evaluation\n',
+						$author$project$Evaluate$permute(
+							A2(
+								$author$project$Util$debug,
+								'Before permute\n',
+								$author$project$Decode$decode(
+									A2($author$project$Util$debug, 'Before decode\n', bits)))))).stack));
+	});
+var $elm$core$List$append = F2(
+	function (xs, ys) {
+		if (!ys.b) {
+			return xs;
+		} else {
+			return A3($elm$core$List$foldr, $elm$core$List$cons, ys, xs);
+		}
+	});
+var $elm$core$List$concat = function (lists) {
+	return A3($elm$core$List$foldr, $elm$core$List$append, _List_Nil, lists);
+};
+var $elm$core$List$concatMap = F2(
+	function (f, list) {
+		return $elm$core$List$concat(
+			A2($elm$core$List$map, f, list));
+	});
+var $author$project$Util$flatten = $elm$core$List$concatMap($elm$core$Basics$identity);
+var $author$project$Evaluate$showDiagnosticForBits = function (bits) {
+	var bitCount = $elm$core$List$length(
+		$author$project$Util$flatten(bits));
+	return A2(
+		$elm$core$String$join,
+		'│',
+		A2(
+			$elm$core$List$map,
+			A2(
+				$elm$core$Basics$composeR,
+				$elm$core$List$map($elm$core$Debug$toString),
+				$elm$core$String$join('')),
+			bits)) + (' (' + ($elm$core$String$fromInt(bitCount) + (' bit(s), ' + ($elm$core$String$fromFloat(bitCount / 8.0) + ' byte(s))'))));
+};
+var $author$project$Evaluate$showCodeResult = F2(
+	function (input, bits) {
+		return $author$project$Evaluate$Evaluation(
+			$author$project$Evaluate$showDiagnosticForBits(bits) + ('\n==============\n' + A2(
+				$author$project$Evaluate$evaluateBits,
+				$author$project$Util$flatten(bits),
+				input)));
+	});
+var $author$project$Evaluate$handleInstructions = F2(
+	function (input, tokens) {
+		var _v0 = A2(
+			$author$project$Util$coalesceMap,
+			A2(
+				$elm$core$Basics$composeL,
+				$author$project$CodeTree$invertInstruction,
+				function (token) {
+					return token.ins;
+				}),
+			tokens);
+		if (_v0.$ === 'Coalesced') {
+			var bitRepresentations = _v0.a;
+			return A2($author$project$Evaluate$showCodeResult, input, bitRepresentations);
+		} else {
+			var offenders = _v0.a;
+			return $author$project$Evaluate$InstructionNotFound(
+				'Not all tokens were given bit representations: ' + A2(
+					$elm$core$String$join,
+					', ',
+					A2(
+						$elm$core$List$map,
+						function (token) {
+							return '\'' + (token.raw + '\'');
+						},
+						offenders)));
+		}
+	});
+var $elm$core$Basics$neq = _Utils_notEqual;
 var $author$project$Types$UnknownOp = {$: 'UnknownOp'};
 var $elm$core$String$cons = _String_cons;
 var $elm$core$String$fromChar = function (_char) {
@@ -5371,74 +5466,27 @@ var $author$project$Literate$tokenize = function (code) {
 };
 var $author$project$Evaluate$evaluate = F2(
 	function (code, input) {
-		return function (x) {
-			return x.a + ('\n==============\n' + x.b);
-		}(
+		return A2(
+			$author$project$Evaluate$handleInstructions,
+			input,
 			A2(
-				$elm$core$Tuple$mapSecond,
+				$elm$core$List$filter,
 				function (x) {
-					return A2(
-						$elm$core$String$join,
-						'\n--------------\n',
-						A2(
-							$elm$core$List$map,
-							function (y) {
-								return $author$project$Atom$atomToString(y) + ('\n' + $elm$core$Debug$toString(y));
-							},
-							function (tokens) {
-								return A2(
-									$author$project$Evaluate$evaluateStep,
-									tokens,
-									$author$project$Evaluate$defaultState(input));
-							}(
-								A2(
-									$author$project$Util$debug,
-									'Before evaluation\n',
-									$author$project$Evaluate$permute(
-										A2(
-											$author$project$Util$debug,
-											'Before permute\n',
-											$author$project$Decode$decode(
-												A2(
-													$author$project$Util$debug,
-													'Before decode\n',
-													A2($elm$core$List$concatMap, $author$project$CodeTree$invertInstruction, x))))))).stack));
+					return x.raw !== ' ';
 				},
-				A2(
-					$elm$core$Tuple$mapFirst,
-					A2(
-						$elm$core$Basics$composeR,
-						$elm$core$List$map($author$project$CodeTree$invertInstruction),
-						function (bits) {
-							var bitCount = $elm$core$List$length(
-								$author$project$Util$flatten(bits));
-							return A2(
-								$elm$core$String$join,
-								'│',
-								A2(
-									$elm$core$List$map,
-									A2(
-										$elm$core$Basics$composeR,
-										$elm$core$List$map($elm$core$Debug$toString),
-										$elm$core$String$join('')),
-									bits)) + (' (' + ($elm$core$String$fromInt(bitCount) + (' bit(s), ' + ($elm$core$String$fromFloat(bitCount / 8.0) + ' byte(s))'))));
-						}),
-					function (x) {
-						return _Utils_Tuple2(x, x);
-					}(
-						A2(
-							$elm$core$List$map,
-							function ($) {
-								return $.ins;
-							},
-							A2(
-								$elm$core$List$filter,
-								function (x) {
-									return x.raw !== ' ';
-								},
-								$author$project$Literate$tokenize(code)))))));
+				$author$project$Literate$tokenize(code)));
 	});
-var $author$project$Taste$evaluate = $author$project$Evaluate$evaluate;
+var $author$project$Taste$evaluate = F2(
+	function (code, input) {
+		var _v0 = A2($author$project$Evaluate$evaluate, code, input);
+		if (_v0.$ === 'Evaluation') {
+			var str = _v0.a;
+			return str;
+		} else {
+			var msg = _v0.a;
+			return 'Something went wrong: ' + msg;
+		}
+	});
 var $elm$json$Json$Encode$string = _Json_wrap;
 var $author$project$NodeOp$put = _Platform_outgoingPort('put', $elm$json$Json$Encode$string);
 var $author$project$NodeOp$update = F2(

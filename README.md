@@ -2,6 +2,8 @@
 
 Taste is an esoteric language whose operators are defined on the bit scale.
 
+* **TODO:** Limit all `exposing` imports to only necessary functions.
+
 ## Language Features
 
 Taste comes with two interpreters which should function the same: [A webpage](./index.html) and a [REPL that runs in `node.js`](./taste.node.js).
@@ -12,7 +14,7 @@ As mentioned, the operators and data in Taste have representations in terms of b
 
 Taste programs follow a simple structure: First, data is declared. This is the start of the program. Then, a series of operators follow the data, creating new values. If operators require data and/or types, all additional arguments are given after the command is specified.
 
-For example, let's consider the following literate program:
+For example, let's consider the following literate program which computes factorial:
 
 ```
 iNr+{x+1}/{x*y}
@@ -31,9 +33,28 @@ input(type = numeric)
   )
 ```
 
+As a more complicated example, consider this code, which computes the `n`th Fibonacci number:
+
+```
+iN*{y+(zY)Z};z
+```
+
+This uses state-setting variables (`Y` and `Z`), the statement separator (`;`), and the fact that default value of the `y` register being `1`. This corresponds to the pseudocode:
+
+```js
+y = 1;
+input(type = numeric)
+  .multiply(() => {
+    y
+      .add(z.saveToY())
+      .saveToZ()
+  });
+z
+```
+
 ## Command Reference
 
-As this language is unstable, the bit representations may not be updated. (Last updated: 2/8/2025).
+As this language is unstable, the bit representations may not reflect current. (Last updated: 2/8/2025).
 
 ### Data
 
@@ -46,12 +67,12 @@ As this language is unstable, the bit representations may not be updated. (Last 
 | `4` | 7 | `1111011` | The constant `4` |
 | `5` | 6 | `111110` | The constant `5` |
 | `t` | 6 | `111111` | The constant `10` |
-| `x` | 2 | `00` | The `x` register |
-| `y` | 4 | `0100` | The `y` register |
-| `z` | 4 | `0101` | The `z` register |
+| `x` | 2 | `00` | The `x` register (initially `0`) |
+| `y` | 4 | `0100` | The `y` register (initially `1`) |
+| `z` | 4 | `0101` | The `z` register (initially `0`) |
 | `i` | 3+N | `011` + type representation | Accepts input of the specified type (see [Types](#Types) table) <br/> `iN`: Integer input (e.g. `3425`) <br/> `iS`: One line of string input (e.g. `Hello`) <br/> `iLN`: Space-separated of integers (until end of line) (e.g. `3 4 5`)|
-| `{` | 3+N | `100` + data-rooted bitstring | Function literal |
-| `(` | 3+? | `101` + ? | Context?????? Paired with `)`, idk |
+| `{` | 3+N | `100` + data-rooted bitstring | Function literal; terminated by `}` |
+| `(` | 3+N | `101` + data-rooted bitstring | Group expression; creates new data rooted bitstring with trailing data; terminated by `)` <br/> Whereas `3+4*5` evaluates to 35 (`(3+4)*5`), `3+(4*5)` evaluates to 23 (`3+(4*5)`), as one might expect |
 | `o` | 7 | `1111000` | UNUSED - presumably, Operator literal? |
 | `v` | 7 | `1111001` | UNUSED - presumably, Vectorized operator literal? |
 

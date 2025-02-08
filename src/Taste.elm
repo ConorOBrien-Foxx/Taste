@@ -5,4 +5,7 @@ import Decode exposing (..)
 import Evaluate exposing (..)
 
 evaluate : String -> String -> String
-evaluate = Evaluate.evaluate
+evaluate code input =
+  case Evaluate.evaluate code input of 
+    Evaluation str -> str
+    InstructionNotFound msg -> "Something went wrong: " ++ msg

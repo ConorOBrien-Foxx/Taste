@@ -52,7 +52,7 @@ mapTupleSame3 : (a -> b) -> (a, a, a) -> (b, b, b)
 mapTupleSame3 fn (q, w, e) = (fn q, fn w, fn e)
 
 flatten : List (List a) -> List a
-flatten = List.concatMap (\x -> x)
+flatten = List.concatMap Basics.identity
 
 {-
   splits a list into three parts based on two functions
@@ -145,3 +145,34 @@ dropLast n vec =
 takeLast : Int -> List a -> List a
 takeLast n vec =
   vec |> List.drop (List.length vec - n)
+
+keepIfNothing : b -> (Maybe a) -> (Maybe b)
+keepIfNothing b a =
+  case a of
+    Nothing -> Just b
+    _ -> Nothing
+
+noteOffenders : (List (Maybe a)) -> (List b) -> (List b)
+noteOffenders maybes original =
+  List.map2 keepIfNothing original maybes
+  |> List.filterMap Basics.identity
+
+
+type CoalesceResult a b
+  = Coalesced (List a)
+  | Offenders (List b)
+
+coalesceMaybe : (List (Maybe a)) -> (List b) -> (CoalesceResult a b)
+coalesceMaybe maybes original =
+  let
+    justs = List.filterMap Basics.identity maybes
+  in
+  if List.length(justs) == List.length(original)
+  then
+    Coalesced justs
+  else
+    Offenders (noteOffenders maybes original)
+
+coalesceMap : (b -> (Maybe a)) -> (List b) -> (CoalesceResult a b)
+coalesceMap fn list =
+  coalesceMaybe (List.map fn list) list

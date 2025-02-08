@@ -38,7 +38,7 @@ inverseDataTree : InverseCodeTree
 inverseDataTree = invertCodeTree dataTree
 
 -- TODO: convert into hard-coded data structure
-invertInstruction : InstructionLeaf -> List Int
+invertInstruction : InstructionLeaf -> Maybe (List Int)
 invertInstruction ins =
   let
     tree = case ins of
@@ -47,7 +47,6 @@ invertInstruction ins =
       DataLeaf _ -> inverseDataTree
   in
     invertFind tree ins
-      |> Maybe.withDefault [0,0,0,0,0,0,0,0,0,0,0,0,0,0] -- TODO: better validation
 
 -- TREE DATA
 typeTree : CodeTree

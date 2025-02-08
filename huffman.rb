@@ -26,8 +26,8 @@ clusters = [
 ]
 
 codes = [
-  # sum of divisors (6.25b)
-  "iNZr/{z%y=0*y+x",
+  # sum of divisors (7.125b)
+  "iNZ+1r/{z%y=0*y+x",
   # sum of list (2.75b)
   "iLN/{x+y",
   # fibonacci (Nth) (5.5b)

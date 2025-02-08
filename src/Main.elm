@@ -12,9 +12,10 @@ import Html.Events exposing (onClick, onInput)
 
 import Taste
 import BrowserPorts
-import Util exposing (debug)
+import Util exposing (..)
 
 -- MAIN
+main : Program SavedModel Model Msg
 main =
   Browser.element
     { init = init

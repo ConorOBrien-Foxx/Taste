@@ -18,7 +18,7 @@ For example, let's consider the following literate program:
 iNr+{x+1}/{x*y}
 ```
 
-Knowing that `i` correspond to input (which must take a type, in this case, `N` for numeric), `r` corresponds to range `[0, r)`, `+` corresponds to mapping in this case (overloaded form of addition), and `/` corresponds to folding in this case (overloaded form of division), we can "rewrite" this program in psuedocode to illustrate the pattern:
+Knowing that `i` correspond to input (which must take a type, in this case, `N` for numeric), `r` corresponds to range `[0, r)`, `+` corresponds to mapping in this case (overloaded form of addition), and `/` corresponds to folding in this case (overloaded form of division), we can "rewrite" this program in pseudocode to illustrate the pattern:
 
 ```js
 input(type = numeric)
@@ -49,7 +49,7 @@ As this language is unstable, the bit representations may not be updated. (Last 
 | `x` | 2 | `00` | The `x` register |
 | `y` | 4 | `0100` | The `y` register |
 | `z` | 4 | `0101` | The `z` register |
-| `i` | 3+N | `011` + type representation | Accepts input of the specified type; see [Types](#Types) table |
+| `i` | 3+N | `011` + type representation | Accepts input of the specified type (see [Types](#Types) table) <br/> `iN`: Integer input (e.g. `3425`) <br/> `iS`: One line of string input (e.g. `Hello`) <br/> `iLN`: Space-separated of integers (until end of line) (e.g. `3 4 5`)|
 | `{` | 3+N | `100` + data-rooted bitstring | Function literal |
 | `(` | 3+? | `101` + ? | Context?????? Paired with `)`, idk |
 | `o` | 7 | `1111000` | UNUSED - presumably, Operator literal? |

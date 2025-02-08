@@ -34,8 +34,8 @@ type alias PermuteState =
   , leaves : List InstructionLeaf
   }
 
-substepPermute : InstructionLeaf -> List InstructionLeaf -> PermuteState -> PermuteState
-substepPermute ins rest stateRest =
+subStepPermute : InstructionLeaf -> List InstructionLeaf -> PermuteState -> PermuteState
+subStepPermute ins rest stateRest =
   let
     subState = permuteHelper { focusOp = Nothing, needsType = Nothing, build = [], leaves = rest }
   in
@@ -70,8 +70,8 @@ permuteHelper state =
           Nothing -> { state | leaves = rest }
         nextState = case ins of
           DataLeaf Input -> { stateRest | needsType = Just ins }
-          DataLeaf Function -> substepPermute ins rest stateRest
-          DataLeaf Context -> substepPermute ins rest stateRest
+          DataLeaf Function -> subStepPermute ins rest stateRest
+          DataLeaf Context -> subStepPermute ins rest stateRest
           OpLeaf Cast -> case stateRest.focusOp of
             Just x ->
               { stateRest

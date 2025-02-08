@@ -16,7 +16,7 @@ def interpret(tree, build="")
     end
 end
 
-claves = [
+clusters = [
   # data
   %w(0 1 2 3 4 5 t i x y z { \( o v),
   # ops
@@ -33,7 +33,8 @@ codes = [
   # fibonacci (Nth) (5.5b)
   "iN*{y+(zY)Z};z",
   # n * n reversed (3.75b)
-  "iNZcSrcN*z"
+  "iNZcSrcN*z",
+  # factorial
   
 ]
 unused = [
@@ -45,7 +46,7 @@ unused = [
 
 total_code = {}
 # obtain probabilities
-claves.each { |symbols|
+clusters.each { |symbols|
   probabilities = {}
   symbols.each { |sym| probabilities[sym] = 0 }
   total = 0

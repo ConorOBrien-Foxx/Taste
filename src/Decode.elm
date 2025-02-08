@@ -77,7 +77,7 @@ getDataType state dat =
     Five -> TasteNumeric
     Ten -> TasteNumeric
     Function -> TasteFunction
-    Context -> TasteNumeric -- TOOD: variable type
+    Context -> TasteNumeric -- TODO: variable type
     Operator -> TasteFunction
     VectorOperator -> TasteFunction
     Input ->
@@ -109,7 +109,7 @@ decodeStep state =
           let
             subStep = decodeStep (newParseState typeTree state.bits)
             subType = case subStep.result of
-              (TypeLeaf a) :: rest -> a
+              (TypeLeaf a) :: _ -> a
               _ -> TasteNumeric
           in
             { state
@@ -147,12 +147,12 @@ decodeStep state =
       then
         let
           subStep = 
-            let a = Util.debug "before function sub-step" 0
+            let _ = Util.debug "before function sub-step" 0
             in Util.debug "function sub-step!!!!" (decodeStep (newParseState dataTree state.bits))
         in
           { nextState
           | bits = subStep.bits
-          , result = nextState.result ++ [ leaf ] ++ subStep.result ++ [ OpLeaf Terminate ]
+          , result = nextState.result ++ leaf :: subStep.result ++ [ OpLeaf Terminate ]
           }
       -- Special Case: Accept Type
       else if leaf == DataLeaf Input || leaf == OpLeaf Cast
@@ -162,7 +162,7 @@ decodeStep state =
         in
           { nextState
           | bits = subStep.bits
-          , result = nextState.result ++ [ leaf ] ++ subStep.result
+          , result = nextState.result ++ leaf :: subStep.result
           , argList =
             (Util.dropLast 1 nextState.argList) ++
             List.filterMap

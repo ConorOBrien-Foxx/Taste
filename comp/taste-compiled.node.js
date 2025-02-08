@@ -3473,7 +3473,6 @@ var $author$project$Decode$decodeStep = function (state) {
 								var _v4 = subStep.result;
 								if (_v4.b && (_v4.a.$ === 'TypeLeaf')) {
 									var a = _v4.a.a;
-									var rest = _v4.b;
 									return a;
 								} else {
 									return $author$project$Types$TasteNumeric;
@@ -3514,17 +3513,17 @@ var $author$project$Decode$decodeStep = function (state) {
 		}
 		var leaf = _v0.a;
 		var augmented = function () {
-			var _v6 = A2($author$project$Util$debug, 'leaf', leaf);
-			switch (_v6.$) {
+			var _v7 = A2($author$project$Util$debug, 'leaf', leaf);
+			switch (_v7.$) {
 				case 'TypeLeaf':
 					return state;
 				case 'OpLeaf':
-					var op = _v6.a;
+					var op = _v7.a;
 					return _Utils_update(
 						state,
 						{op: op});
 				default:
-					var td = _v6.a;
+					var td = _v7.a;
 					return _Utils_update(
 						state,
 						{
@@ -3559,7 +3558,7 @@ var $author$project$Decode$decodeStep = function (state) {
 				leaf,
 				$author$project$Types$DataLeaf($author$project$Types$Context))) {
 				var subStep = function () {
-					var a = A2($author$project$Util$debug, 'before function sub-step', 0);
+					var _v5 = A2($author$project$Util$debug, 'before function sub-step', 0);
 					return A2(
 						$author$project$Util$debug,
 						'function sub-step!!!!',
@@ -3572,9 +3571,9 @@ var $author$project$Decode$decodeStep = function (state) {
 						bits: subStep.bits,
 						result: _Utils_ap(
 							nextState.result,
-							_Utils_ap(
-								_List_fromArray(
-									[leaf]),
+							A2(
+								$elm$core$List$cons,
+								leaf,
 								_Utils_ap(
 									subStep.result,
 									_List_fromArray(
@@ -3609,10 +3608,7 @@ var $author$project$Decode$decodeStep = function (state) {
 							bits: subStep.bits,
 							result: _Utils_ap(
 								nextState.result,
-								_Utils_ap(
-									_List_fromArray(
-										[leaf]),
-									subStep.result))
+								A2($elm$core$List$cons, leaf, subStep.result))
 						});
 				} else {
 					return _Utils_update(

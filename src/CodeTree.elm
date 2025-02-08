@@ -1,6 +1,5 @@
 module CodeTree exposing (..)
 
-import Dict exposing (Dict)
 import Types exposing (..)
 
 type CodeTree

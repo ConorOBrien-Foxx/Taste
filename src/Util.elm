@@ -131,8 +131,8 @@ splitWhere cond vec =
   case vec of
     [] -> ([], [], [])
     [k] -> if cond k then ([], [k], []) else ([k], [], [])
-    head :: rest ->
-      splitWhereMap cond (\a b -> a) head vec
+    head :: _ ->
+      splitWhereMap cond (\a _ -> a) head vec
 
 splitWhereString : (Char -> Bool) -> String -> (String, String, String)
 splitWhereString cond =

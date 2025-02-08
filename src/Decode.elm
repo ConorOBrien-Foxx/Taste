@@ -2,7 +2,7 @@ module Decode exposing (..)
 
 import Types exposing (..)
 import CodeTree exposing (..)
-import Util exposing (lastElement)
+import Util exposing (..)
 
 type alias ParseState =
   { target : CodeTree

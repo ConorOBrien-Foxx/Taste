@@ -2,8 +2,8 @@ module Evaluate exposing (..)
 
 import Atom exposing (..)
 import Decode exposing (..)
-import Literate exposing (Token)
-import CodeTree exposing (invertInstruction)
+import Literate exposing (..)
+import CodeTree exposing (..)
 import Types exposing (..)
 import Util
 
@@ -40,7 +40,7 @@ substepPermute ins rest stateRest =
     subState = permuteHelper { focusOp = Nothing, needsType = Nothing, build = [], leaves = rest }
   in
   { stateRest
-  | build = stateRest.build ++ [ ins ] ++ subState.build ++ [ OpLeaf Terminate ]
+  | build = stateRest.build ++ ins :: subState.build ++ [ OpLeaf Terminate ]
   , leaves = subState.leaves
   }
 
@@ -115,6 +115,42 @@ evaluateAt2 : List InstructionLeaf -> TasteState -> Atom -> Atom -> (TasteState,
 evaluateAt2 fn state x y =
   newStateWithXY state x y |> evaluateToAtom fn
 
+
+transformDepth : InstructionLeaf -> Int -> Int
+transformDepth op depth =
+  case op of
+    DataLeaf Function -> depth + 1
+    DataLeaf Context -> depth + 1
+    OpLeaf Terminate -> depth - 1
+    _ -> depth
+
+-- takes a list of instructions starting with the first character in the body
+readBalanced : List InstructionLeaf -> (List InstructionLeaf, List InstructionLeaf, List InstructionLeaf)
+readBalanced =
+  Util.splitWhereMap
+    ((==) 0)
+    transformDepth
+    1 -- initial depth
+
+evaluateStep : List InstructionLeaf -> TasteState -> TasteState
+evaluateStep ops state =
+  case ops of
+    [] -> state
+    DataLeaf Function :: rest ->
+      let
+        (fn, _, next) = readBalanced rest
+      in
+      evaluateStep next { state | stack = TypeFunction fn :: state.stack }
+    DataLeaf Context :: rest ->
+      let
+        (fn, _, next) = readBalanced rest
+        innerState = evaluateStep fn state
+      in
+      evaluateStep next { innerState | stack = innerState.stack }
+    op :: rest ->
+      evaluateInstruction state op
+        |> evaluateStep rest
+
 evaluateToAtom : List InstructionLeaf -> TasteState -> (TasteState, Atom)
 evaluateToAtom fn state = 
   let
@@ -125,7 +161,7 @@ evaluateToAtom fn state =
 pushType : TasteType -> TasteState -> TasteState
 pushType tasteType state =
   { state
-  | typeStack = [ tasteType ] ++ state.typeStack
+  | typeStack = tasteType :: state.typeStack
   }
 
 popType : TasteState -> (Maybe TasteType, TasteState)
@@ -151,7 +187,7 @@ parseInput tasteType input =
       , String.trimLeft (mid ++ rest)
       )
     TasteString ->
-      let (line, mid, rest) = Util.splitWhereString (\ch -> ch == '\n') input
+      let (line, _, rest) = Util.splitWhereString (\ch -> ch == '\n') input
       in
       ( TypeString line
       , rest
@@ -159,7 +195,7 @@ parseInput tasteType input =
     -- TODO: other list types
     TasteList (TasteNumeric) ->
       let
-        (line, mid, rest) = Util.splitWhereString (\ch -> ch == '\n') input
+        (line, _, rest) = Util.splitWhereString (\ch -> ch == '\n') input
         nums = line
           |> String.split " "
           |> List.filterMap String.toInt
@@ -209,16 +245,16 @@ evaluateInstruction : TasteState -> InstructionLeaf -> TasteState
 evaluateInstruction state op =
   case op of
     TypeLeaf typ  -> pushType typ state
-    DataLeaf Zero  -> { state | stack = [ TypeInteger  0 ] ++ state.stack }
-    DataLeaf One   -> { state | stack = [ TypeInteger  1 ] ++ state.stack }
-    DataLeaf Two   -> { state | stack = [ TypeInteger  2 ] ++ state.stack }
-    DataLeaf Three -> { state | stack = [ TypeInteger  3 ] ++ state.stack }
-    DataLeaf Four  -> { state | stack = [ TypeInteger  4 ] ++ state.stack }
-    DataLeaf Five  -> { state | stack = [ TypeInteger  5 ] ++ state.stack }
-    DataLeaf Ten   -> { state | stack = [ TypeInteger 10 ] ++ state.stack }
-    DataLeaf RegX  -> { state | stack = [ state.x ] ++ state.stack }
-    DataLeaf RegY  -> { state | stack = [ state.y ] ++ state.stack }
-    DataLeaf RegZ  -> { state | stack = [ state.z ] ++ state.stack }
+    DataLeaf Zero  -> { state | stack = TypeInteger  0 :: state.stack }
+    DataLeaf One   -> { state | stack = TypeInteger  1 :: state.stack }
+    DataLeaf Two   -> { state | stack = TypeInteger  2 :: state.stack }
+    DataLeaf Three -> { state | stack = TypeInteger  3 :: state.stack }
+    DataLeaf Four  -> { state | stack = TypeInteger  4 :: state.stack }
+    DataLeaf Five  -> { state | stack = TypeInteger  5 :: state.stack }
+    DataLeaf Ten   -> { state | stack = TypeInteger 10 :: state.stack }
+    DataLeaf RegX  -> { state | stack = state.x :: state.stack }
+    DataLeaf RegY  -> { state | stack = state.y :: state.stack }
+    DataLeaf RegZ  -> { state | stack = state.z :: state.stack }
     DataLeaf Input ->
       let
         (tasteType, nextState) = popType state
@@ -227,7 +263,7 @@ evaluateInstruction state op =
       in
       { nextState
       | input = nextInput
-      , stack = [ element ] ++ state.stack
+      , stack = element :: state.stack
       }
     OpLeaf Cast ->
       let
@@ -238,49 +274,49 @@ evaluateInstruction state op =
         [] -> nextState
         a :: rest ->
           { nextState
-          | stack = [ convertTo finalType a ] ++ rest
+          | stack = convertTo finalType a :: rest
           }
     OpLeaf SaveY ->
       case state.stack of
         [] -> state
-        a :: rest -> { state | y = a }
+        a :: _ -> { state | y = a }
     OpLeaf SaveZ ->
       case state.stack of
         [] -> state
-        a :: rest -> { state | z = a }
+        a :: _ -> { state | z = a }
     OpLeaf Add ->
       applyStack <| case state.stack of
         [] ->
           (state, [])
-        Error a :: rest ->
+        Error _ :: _ ->
           (state, state.stack)
-        [a] ->
+        [_] ->
           (state, [ Error "Insufficient Arguments" ])
         TypeInteger b :: TypeInteger a :: rest ->
-          (state, [ TypeInteger (a + b) ] ++ rest)
+          (state, TypeInteger (a + b) :: rest)
         TypeString b :: TypeString a :: rest ->
-          (state, [ TypeString (a ++ b) ] ++ rest)
+          (state, TypeString (a ++ b) :: rest)
         -- map
         TypeFunction fn :: TypeList v :: rest ->
           let
             (returnState, mapped) = stateMap fn state v
           in
-          (returnState, [ TypeList mapped ] ++ rest)
+          (returnState, TypeList mapped :: rest)
         -- concat
         TypeList b :: TypeList a :: rest ->
-          (state, [ TypeList (a ++ b) ] ++ rest)
+          (state, TypeList (a ++ b) :: rest)
         -- append
         any :: TypeList arr :: rest ->
-          (state, [ TypeList (arr ++ [ any ]) ] ++ rest)
+          (state, TypeList (arr ++ [ any ]) :: rest)
         b :: a :: rest ->
-          (state, [ mismatchError "Add" [a, b] ] ++ rest)
+          (state, mismatchError "Add" [a, b] :: rest)
     OpLeaf Multiply ->
       applyStack <| case state.stack of
         [] ->
           (state, [])
-        Error a :: rest ->
+        Error _ :: _ ->
           (state, state.stack)
-        [a] ->
+        [_] ->
           (state, [ Error "Insufficient Arguments" ])
         -- apply N times
         TypeFunction fn :: TypeInteger n :: rest ->
@@ -289,13 +325,13 @@ evaluateInstruction state op =
               List.range 1 n
                 |> List.map TypeInteger
                 |> List.foldl
-                  (\el (inner, build) ->
+                  (\_ (inner, build) ->
                     let (nextInner, atom) = evaluateToAtom fn inner
                     in (nextInner, build ++ [ atom ])
                   )
                   (state, [])
           in
-          (returnState, [ TypeList mapped ] ++ rest)
+          (returnState, TypeList mapped :: rest)
         second :: first :: rest ->
           let
             value = case (first, second) of
@@ -305,109 +341,77 @@ evaluateInstruction state op =
               (TypeBoolean a, TypeBoolean b) -> TypeBoolean (a && b)
               (a, b) -> mismatchError "Multiply" [a, b]
           in
-          (state, [ value ] ++ rest)
+          (state, value :: rest)
     OpLeaf Divide ->
       applyStack <| case state.stack of
         [] ->
           (state, [])
-        Error a :: rest ->
+        Error _ :: _ ->
           (state, state.stack)
-        [a] ->
+        [_] ->
           (state, [ Error "Insufficient Arguments" ])
         TypeInteger b :: TypeInteger a :: rest ->
           -- TODO: Regular float division and auto casting arguments.
-          (state, [ TypeInteger (a // b) ] ++ rest)
+          (state, TypeInteger (a // b) :: rest)
         TypeInteger n :: TypeList vec :: rest ->
-          (state, [ vec |> Util.splitChunk n |> List.map TypeList |> TypeList ] ++ rest)
+          (state, (vec |> Util.splitChunk n |> List.map TypeList |> TypeList) :: rest)
         TypeFunction fn :: TypeList vec :: rest ->
           let
             (returnState, folded) = 
               stateFoldl fn state (TypeInteger 0) vec
           in
-          (returnState, [ folded ] ++ rest)
+          (returnState, folded :: rest)
         b :: a :: rest ->
-          (state, [ mismatchError "Divide" [a, b] ] ++ rest)
+          (state, mismatchError "Divide" [a, b] :: rest)
     OpLeaf Modulo ->
       applyStack <| case state.stack of
         [] ->
           (state, [])
-        Error a :: rest ->
+        Error _ :: _ ->
           (state, state.stack)
-        [a] ->
+        [_] ->
           (state, [ Error "Insufficient Arguments" ])
         TypeInteger b :: TypeInteger a :: rest ->
-          (state, [ TypeInteger (if b == 0 then 0 else modBy b a) ] ++ rest)
+          (state, TypeInteger (if b == 0 then 0 else modBy b a) :: rest)
         b :: a :: rest ->
-          (state, [ mismatchError "Modulo" [a, b] ] ++ rest)
+          (state, mismatchError "Modulo" [a, b] :: rest)
     OpLeaf Equality ->
       applyStack <| case state.stack of
         [] ->
           (state, [])
-        Error a :: rest ->
+        Error _ :: _ ->
           (state, state.stack)
-        [a] ->
+        [_] ->
           (state, [ Error "Insufficient Arguments" ])
         TypeInteger b :: TypeInteger a :: rest ->
-          (state, [ TypeBoolean (a == b) ] ++ rest)
+          (state, TypeBoolean (a == b) :: rest)
         b :: a :: rest ->
-          (state, [ mismatchError "Equality" [a, b] ] ++ rest)
+          (state, mismatchError "Equality" [a, b] :: rest)
     OpLeaf Separator ->
       applyStack <| case state.stack of
         [] ->
           (state, [])
-        Error a :: rest ->
+        Error _ :: _ ->
           (state, state.stack)
-        [a] ->
+        [_] ->
           (state, state.stack)
-        b :: a :: rest ->
-          (state, [ b ] ++ rest)
+        b :: _ :: rest ->
+          (state, b :: rest)
     OpLeaf Range ->
       { state
       | stack = case state.stack of
         [] -> []
-        Error a :: rest -> state.stack
+        Error _ :: _ -> state.stack
         TypeInteger a :: rest ->
-          [ TypeList (List.map TypeInteger (List.range 0 (a - 1) )) ] ++ rest
+          TypeList (List.map TypeInteger (List.range 0 (a - 1) )) :: rest
         TypeList v :: rest ->
-          [ TypeList (List.reverse v) ] ++ rest
+          TypeList (List.reverse v) :: rest
         TypeString s :: rest ->
-          [ TypeString (String.reverse s) ] ++ rest
-        a :: rest -> [ Error "Unrecognized Type (Range)" ] ++ rest
+          TypeString (String.reverse s) :: rest
+        _ :: rest -> Error "Unrecognized Type (Range)" :: rest
       }
     -- UnknownOp -> state
-    _ -> { state | stack = [ Error ("Unrecognized operator " ++ Debug.toString op) ] ++ state.stack }
-
--- takes a list of instructions starting with the first character in the body
-readBalanced : List InstructionLeaf -> (List InstructionLeaf, List InstructionLeaf, List InstructionLeaf)
-readBalanced =
-  Util.splitWhereMap
-    (\depth -> depth == 0)
-    (\op depth -> case op of
-      DataLeaf Function -> depth + 1
-      DataLeaf Context -> depth + 1
-      OpLeaf Terminate -> depth - 1
-      _ -> depth
-      )
-    1 -- initial depth
-
-evaluateStep : List InstructionLeaf -> TasteState -> TasteState
-evaluateStep ops state =
-  case ops of
-    [] -> state
-    DataLeaf Function :: rest ->
-      let
-        (fn, terminator, next) = readBalanced rest
-      in
-      evaluateStep next { state | stack = [ TypeFunction fn ] ++ state.stack }
-    DataLeaf Context :: rest ->
-      let
-        (fn, terminator, next) = readBalanced rest
-        innerState = evaluateStep fn state
-      in
-      evaluateStep next { innerState | stack = innerState.stack }
-    op :: rest ->
-      evaluateInstruction state op
-        |> evaluateStep rest
+    _ -> { state | stack = Error ("Unrecognized operator " ++ Debug.toString op) :: state.stack }
 
 evaluate : String -> String -> String
 evaluate code input =

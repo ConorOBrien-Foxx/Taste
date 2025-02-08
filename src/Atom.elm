@@ -34,7 +34,8 @@ atomToString atom =
         List.map atomToString l |> String.join " "
       ) ++ "]"
     
-    TypeFunction fn ->
+    -- TODO: better function representation?
+    TypeFunction _ ->
       "{ ... }"
     
     Error s ->

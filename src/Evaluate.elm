@@ -367,7 +367,7 @@ evaluateInstruction state op =
         [] -> []
         Error a :: rest -> state.stack
         TypeInteger a :: rest ->
-          [ TypeList (List.map TypeInteger (List.range 0 a)) ] ++ rest
+          [ TypeList (List.map TypeInteger (List.range 0 (a - 1) )) ] ++ rest
         TypeList v :: rest ->
           [ TypeList (List.reverse v) ] ++ rest
         TypeString s :: rest ->
@@ -421,6 +421,7 @@ evaluate code input =
       >> (\bits ->
         let bitCount = List.length <| Util.flatten bits
         in
+        -- TODO: Remove Debug.toString, as this is not available in production
         (bits |> List.map (List.map Debug.toString >> String.join "") |> String.join "│")
         ++ " (" ++ String.fromInt bitCount ++ " bit(s), "
         ++ String.fromFloat (toFloat bitCount / 8.0) ++ " byte(s))")

@@ -4873,7 +4873,7 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 																A2(
 																	$elm$core$List$map,
 																	$author$project$Atom$TypeInteger,
-																	A2($elm$core$List$range, 0, a)))
+																	A2($elm$core$List$range, 0, a - 1)))
 															]),
 														rest);
 												case 'TypeList':

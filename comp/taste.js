@@ -5169,11 +5169,25 @@ var $author$project$Main$init = function (flags) {
 		$elm$core$Platform$Cmd$none);
 };
 var $elm$json$Json$Decode$string = _Json_decodeString;
-var $elm$core$Platform$Sub$batch = _Platform_batch;
-var $elm$core$Platform$Sub$none = $elm$core$Platform$Sub$batch(_List_Nil);
-var $author$project$Main$subscriptions = function (_v0) {
-	return $elm$core$Platform$Sub$none;
+var $author$project$Main$Receive = function (a) {
+	return {$: 'Receive', a: a};
 };
+var $author$project$BrowserPorts$messageReceiver = _Platform_incomingPort('messageReceiver', $elm$json$Json$Decode$string);
+var $author$project$Main$subscriptions = function (_v0) {
+	return $author$project$BrowserPorts$messageReceiver($author$project$Main$Receive);
+};
+var $author$project$Main$Execute = {$: 'Execute'};
+var $elm$core$Debug$log = _Debug_log;
+var $elm$core$Tuple$second = function (_v0) {
+	var y = _v0.b;
+	return y;
+};
+var $author$project$Util$debug = F2(
+	function (msg, value) {
+		return _Utils_Tuple2(
+			A2($elm$core$Debug$log, msg, value),
+			value).b;
+	});
 var $elm$core$String$fromFloat = _String_fromNumber;
 var $author$project$Atom$atomToString = function (atom) {
 	switch (atom.$) {
@@ -5223,17 +5237,6 @@ var $elm$core$List$concatMap = F2(
 	function (f, list) {
 		return $elm$core$List$concat(
 			A2($elm$core$List$map, f, list));
-	});
-var $elm$core$Debug$log = _Debug_log;
-var $elm$core$Tuple$second = function (_v0) {
-	var y = _v0.b;
-	return y;
-};
-var $author$project$Util$debug = F2(
-	function (msg, value) {
-		return _Utils_Tuple2(
-			A2($elm$core$Debug$log, msg, value),
-			value).b;
 	});
 var $author$project$Types$Context = {$: 'Context'};
 var $author$project$Types$DataLeaf = function (a) {
@@ -7129,7 +7132,7 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 																A2(
 																	$elm$core$List$map,
 																	$author$project$Atom$TypeInteger,
-																	A2($elm$core$List$range, 0, a)))
+																	A2($elm$core$List$range, 0, a - 1)))
 															]),
 														rest);
 												case 'TypeList':
@@ -7813,34 +7816,54 @@ var $author$project$Taste$evaluate = $author$project$Evaluate$evaluate;
 var $elm$json$Json$Encode$string = _Json_wrap;
 var $author$project$BrowserPorts$storeCode = _Platform_outgoingPort('storeCode', $elm$json$Json$Encode$string);
 var $author$project$BrowserPorts$storeInput = _Platform_outgoingPort('storeInput', $elm$json$Json$Encode$string);
+var $elm$json$Json$Encode$null = _Json_encodeNull;
+var $author$project$BrowserPorts$syncOutput = _Platform_outgoingPort(
+	'syncOutput',
+	function ($) {
+		return $elm$json$Json$Encode$null;
+	});
 var $author$project$Main$update = F2(
 	function (msg, model) {
-		switch (msg.$) {
-			case 'CodeChange':
-				var newCode = msg.a;
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{code: newCode}),
-					$author$project$BrowserPorts$storeCode(newCode));
-			case 'ChangeInput':
-				var newInput = msg.a;
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{input: newInput}),
-					$author$project$BrowserPorts$storeInput(newInput));
-			case 'Execute':
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{
-							output: A2($author$project$Taste$evaluate, model.code, model.input)
-						}),
-					$elm$core$Platform$Cmd$none);
-			default:
-				var str = msg.a;
-				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+		update:
+		while (true) {
+			switch (msg.$) {
+				case 'CodeChange':
+					var newCode = msg.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{code: newCode}),
+						$author$project$BrowserPorts$storeCode(newCode));
+				case 'ChangeInput':
+					var newInput = msg.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{input: newInput}),
+						$author$project$BrowserPorts$storeInput(newInput));
+				case 'Execute':
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								output: A2($author$project$Taste$evaluate, model.code, model.input)
+							}),
+						$author$project$BrowserPorts$syncOutput(_Utils_Tuple0));
+				default:
+					var str = msg.a;
+					if (str === 'Execute') {
+						var $temp$msg = $author$project$Main$Execute,
+							$temp$model = model;
+						msg = $temp$msg;
+						model = $temp$model;
+						continue update;
+					} else {
+						return A2(
+							$author$project$Util$debug,
+							'Could not handle action ' + str,
+							_Utils_Tuple2(model, $elm$core$Platform$Cmd$none));
+					}
+			}
 		}
 	});
 var $author$project$Main$ChangeInput = function (a) {
@@ -7849,7 +7872,6 @@ var $author$project$Main$ChangeInput = function (a) {
 var $author$project$Main$CodeChange = function (a) {
 	return {$: 'CodeChange', a: a};
 };
-var $author$project$Main$Execute = {$: 'Execute'};
 var $elm$html$Html$a = _VirtualDom_node('a');
 var $elm$html$Html$Attributes$stringProperty = F2(
 	function (key, string) {

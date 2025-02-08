@@ -142,6 +142,7 @@ dataTree =
         Tree (
           --0100
           Leaf (DataLeaf RegY),
+          --0101
           Leaf (DataLeaf RegZ)
         ),
         --011

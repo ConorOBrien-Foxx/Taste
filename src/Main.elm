@@ -12,6 +12,7 @@ import Html.Events exposing (onClick, onInput)
 
 import Taste
 import BrowserPorts
+import Util exposing (debug)
 
 -- MAIN
 main =
@@ -67,13 +68,19 @@ update msg model =
     
     Execute ->
       ( { model | output = Taste.evaluate model.code model.input }
-      , Cmd.none
+      , BrowserPorts.syncOutput ()
       )
     
     Receive str ->
-      ( model
-      , Cmd.none
-      )
+      case str of
+        "Execute" -> update Execute model
+
+        _ ->
+          Util.debug
+            ("Could not handle action " ++ str)
+            ( model
+            , Cmd.none
+            )
 
 -- VIEW
 blankLink : String -> String -> Html msg
@@ -104,5 +111,5 @@ view model =
 -- SUBSCRIPTIONS
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-  Sub.none
-  -- BrowserPorts.messageReceiver Receive
+  -- Sub.none
+  BrowserPorts.messageReceiver Receive

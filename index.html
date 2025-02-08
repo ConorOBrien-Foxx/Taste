@@ -9,51 +9,7 @@
 <body>
     <div id="ElmApp"></div>
 </body>
-<textarea id="dummy" readonly=""></textarea>
+<textarea id="dummyTextboxForCalculatingSizeOfRealTextboxes" readonly=""></textarea>
 
-<script type="text/javascript">
-
-const app = Elm.Main.init({
-    node: document.getElementById("ElmApp"),
-    flags: {
-        code: sessionStorage.code ?? "",
-        input: sessionStorage.input ?? ""
-    }
-});
-
-app.ports.storeCode.subscribe(code => sessionStorage.code = code);
-app.ports.storeInput.subscribe(input => sessionStorage.input = input);
-
-// you CANNOT make me do this in Elm.
-// copied from TIO
-function resize(textArea) {
-	var dummy = document.getElementById("dummy");
-	textArea = this == window ? textArea : this;
-	dummy.style.fontFamily = getComputedStyle(textArea).fontFamily;
-	dummy.style.width = getComputedStyle(textArea).width;
-	dummy.value = textArea.value;
-	textArea.style.height = Math.max(dummy.scrollHeight, textArea.dataset.baseHeight || 27) + "px";
-	dummy.value = "";
-};
-
-let textAreas = document.querySelectorAll("textarea")
-for(let ta of textAreas) {
-    if(ta.id === "dummy") continue;
-    ta.addEventListener("input", resize);
-    resize(ta);
-}
-
-const execute = document.getElementById("execute");
-const output = document.getElementById("output");
-execute.addEventListener("click", function () {
-    setTimeout(() => resize(output), 0);
-});
-
-window.addEventListener("resize", () => {
-    for(let ta of textAreas) {
-        resize(ta);
-    }
-});
-
-</script>
+<script type="text/javascript" src="./taste-web.js"></script>
 </html>

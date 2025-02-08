@@ -4010,10 +4010,26 @@ var $author$project$Evaluate$newStateWithXY = F3(
 	function (state, x, y) {
 		return {input: state.input, stack: _List_Nil, typeStack: _List_Nil, x: x, y: y, z: state.z};
 	});
+var $author$project$Atom$TypeFloat = function (a) {
+	return {$: 'TypeFloat', a: a};
+};
 var $author$project$Evaluate$inputError = function (input) {
 	return _Utils_Tuple2(
 		$author$project$Atom$Error('could not parse input'),
 		input);
+};
+var $elm$core$String$length = _String_length;
+var $elm$core$String$slice = _String_slice;
+var $elm$core$String$dropLeft = F2(
+	function (n, string) {
+		return (n < 1) ? string : A3(
+			$elm$core$String$slice,
+			n,
+			$elm$core$String$length(string),
+			string);
+	});
+var $elm$core$Basics$negate = function (n) {
+	return -n;
 };
 var $elm$core$Basics$not = _Basics_not;
 var $elm$core$String$fromList = _String_fromList;
@@ -4114,7 +4130,48 @@ var $author$project$Util$splitWhereString = function (cond) {
 			$author$project$Util$splitWhere(cond),
 			$author$project$Util$mapTupleSame3($elm$core$String$fromList)));
 };
+var $elm$core$String$startsWith = _String_startsWith;
+var $elm$core$String$toFloat = _String_toFloat;
 var $elm$core$String$trimLeft = _String_trimLeft;
+var $author$project$Evaluate$parseNumeric = function (input) {
+	var isNegative = A2($elm$core$String$startsWith, '-', input) || A2($elm$core$String$startsWith, '_', input);
+	var sign = isNegative ? (-1) : 1;
+	var _v0 = A2(
+		$author$project$Util$splitWhereString,
+		A2($elm$core$Basics$composeL, $elm$core$Basics$not, $elm$core$Char$isDigit),
+		isNegative ? A2($elm$core$String$dropLeft, 1, input) : input);
+	var digits = _v0.a;
+	var mid = _v0.b;
+	var rest = _v0.c;
+	var trueRest = _Utils_ap(mid, rest);
+	var isDecimal = A2($elm$core$String$startsWith, '.', trueRest);
+	if (isDecimal) {
+		var _v1 = A2(
+			$author$project$Util$splitWhereString,
+			A2($elm$core$Basics$composeL, $elm$core$Basics$not, $elm$core$Char$isDigit),
+			A2($elm$core$String$dropLeft, 1, trueRest));
+		var decimalDigits = _v1.a;
+		var midAfterDecimal = _v1.b;
+		var restAfterDecimal = _v1.c;
+		return _Utils_Tuple2(
+			$author$project$Atom$TypeFloat(
+				sign * A2(
+					$elm$core$Maybe$withDefault,
+					0.0,
+					$elm$core$String$toFloat(digits + ('.' + decimalDigits)))),
+			_Utils_ap(
+				$elm$core$String$trimLeft(midAfterDecimal),
+				restAfterDecimal));
+	} else {
+		return _Utils_Tuple2(
+			$author$project$Atom$TypeInteger(
+				sign * A2(
+					$elm$core$Maybe$withDefault,
+					0,
+					$elm$core$String$toInt(digits))),
+			$elm$core$String$trimLeft(trueRest));
+	}
+};
 var $author$project$Evaluate$parseInput = F2(
 	function (tasteType, input) {
 		var _v0 = A2($author$project$Util$debug, 'input type:', tasteType);
@@ -4122,23 +4179,9 @@ var $author$project$Evaluate$parseInput = F2(
 		while (true) {
 			switch (_v0.$) {
 				case 'TasteNumeric':
-					var _v1 = A2(
-						$author$project$Util$splitWhereString,
-						A2($elm$core$Basics$composeL, $elm$core$Basics$not, $elm$core$Char$isDigit),
-						input);
-					var digits = _v1.a;
-					var mid = _v1.b;
-					var rest = _v1.c;
-					return _Utils_Tuple2(
-						$author$project$Atom$TypeInteger(
-							A2(
-								$elm$core$Maybe$withDefault,
-								0,
-								$elm$core$String$toInt(digits))),
-						$elm$core$String$trimLeft(
-							_Utils_ap(mid, rest)));
+					return $author$project$Evaluate$parseNumeric(input);
 				case 'TasteString':
-					var _v2 = A2(
+					var _v1 = A2(
 						$author$project$Util$splitWhereString,
 						function (ch) {
 							return _Utils_eq(
@@ -4146,15 +4189,15 @@ var $author$project$Evaluate$parseInput = F2(
 								_Utils_chr('\n'));
 						},
 						input);
-					var line = _v2.a;
-					var rest = _v2.c;
+					var line = _v1.a;
+					var rest = _v1.c;
 					return _Utils_Tuple2(
 						$author$project$Atom$TypeString(line),
 						rest);
 				case 'TasteList':
 					if (_v0.a.$ === 'TasteNumeric') {
-						var _v3 = _v0.a;
-						var _v4 = A2(
+						var _v2 = _v0.a;
+						var _v3 = A2(
 							$author$project$Util$splitWhereString,
 							function (ch) {
 								return _Utils_eq(
@@ -4162,15 +4205,20 @@ var $author$project$Evaluate$parseInput = F2(
 									_Utils_chr('\n'));
 							},
 							input);
-						var line = _v4.a;
-						var rest = _v4.c;
+						var line = _v3.a;
+						var rest = _v3.c;
 						var nums = $author$project$Atom$TypeList(
 							A2(
 								$elm$core$List$map,
-								$author$project$Atom$TypeInteger,
+								function (n) {
+									return _Utils_eq(
+										$elm$core$Basics$ceiling(n),
+										$elm$core$Basics$floor(n)) ? $author$project$Atom$TypeInteger(
+										$elm$core$Basics$floor(n)) : $author$project$Atom$TypeFloat(n);
+								},
 								A2(
 									$elm$core$List$filterMap,
-									$elm$core$String$toInt,
+									$elm$core$String$toFloat,
 									A2($elm$core$String$split, ' ', line))));
 						return _Utils_Tuple2(nums, rest);
 					} else {

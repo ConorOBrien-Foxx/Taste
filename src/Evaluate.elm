@@ -178,15 +178,40 @@ inputError : String -> (Atom, String)
 inputError input =
   (Error "could not parse input", input)
 
+parseNumeric : String -> (Atom, String)
+parseNumeric input =
+  let
+    isNegative = String.startsWith "-" input || String.startsWith "_" input
+
+    sign = if isNegative then -1 else 1
+
+    (digits, mid, rest) = Util.splitWhereString
+      (not << Char.isDigit)
+      (if isNegative then String.dropLeft 1 input else input)
+    
+    trueRest = mid ++ rest
+
+    isDecimal = String.startsWith "." trueRest
+  in
+  if isDecimal
+  then
+    let
+      (decimalDigits, midAfterDecimal, restAfterDecimal) = Util.splitWhereString
+        (not << Char.isDigit)
+        (String.dropLeft 1 trueRest)
+    in
+      ( TypeFloat (sign * ((digits ++ "." ++ decimalDigits) |> String.toFloat |> Maybe.withDefault 0.0))
+      , String.trimLeft midAfterDecimal ++ restAfterDecimal
+      )
+  else
+    ( TypeInteger (sign * (digits |> String.toInt |> Maybe.withDefault 0))
+    , String.trimLeft trueRest
+    )
+
 parseInput : TasteType -> String -> (Atom, String)
 parseInput tasteType input =
   case Util.debug "input type:" tasteType of
-    TasteNumeric ->
-      let (digits, mid, rest) = Util.splitWhereString (not << Char.isDigit) input
-      in
-      ( TypeInteger (digits |> String.toInt |> Maybe.withDefault 0)
-      , String.trimLeft (mid ++ rest)
-      )
+    TasteNumeric -> parseNumeric input
     TasteString ->
       let (line, _, rest) = Util.splitWhereString (\ch -> ch == '\n') input
       in
@@ -199,8 +224,8 @@ parseInput tasteType input =
         (line, _, rest) = Util.splitWhereString (\ch -> ch == '\n') input
         nums = line
           |> String.split " "
-          |> List.filterMap String.toInt
-          |> List.map TypeInteger
+          |> List.filterMap String.toFloat
+          |> List.map (\n -> if Basics.ceiling(n) == Basics.floor(n) then TypeInteger (Basics.floor(n)) else TypeFloat n)
           |> TypeList
       in
       (nums, rest)

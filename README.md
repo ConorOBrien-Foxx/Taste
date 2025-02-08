@@ -70,11 +70,11 @@ As this language is unstable, the bit representations may not reflect current. (
 | `x` | 2 | `00` | The `x` register (initially `0`) |
 | `y` | 4 | `0100` | The `y` register (initially `1`) |
 | `z` | 4 | `0101` | The `z` register (initially `0`) |
-| `i` | 3+N | `011` + type representation | Accepts input of the specified type (see [Types](#Types) table) <br/> `iN`: Integer input (e.g. `3425`) <br/> `iS`: One line of string input (e.g. `Hello`) <br/> `iLN`: Space-separated of integers (until end of line) (e.g. `3 4 5`)|
+| `i` | 3+N | `011` + type representation | Accepts input of the specified type (see [Types](#Types) table) <br/> `iN`: Numeric input (e.g. `3425`, `-5.04`, or `_3`) <br/> `iS`: One line of string input (e.g. `Hello`) <br/> `iLN`: Space-separated of numbers (until end of line) (e.g. `3 4 5.2 6`)|
 | `{` | 3+N | `100` + data-rooted bitstring | Function literal; terminated by `}` |
 | `(` | 3+N | `101` + data-rooted bitstring | Group expression; creates new data rooted bitstring with trailing data; terminated by `)` <br/> Whereas `3+4*5` evaluates to 35 (`(3+4)*5`), `3+(4*5)` evaluates to 23 (`3+(4*5)`), as one might expect |
-| `o` | 7 | `1111000` | UNUSED - presumably, Operator literal? |
-| `v` | 7 | `1111001` | UNUSED - presumably, Vectorized operator literal? |
+| `o` | 7+N | `1111000` + operator representation | Equivalent to the function literal `{x op y}` |
+| `v` | 7 | `1111001` | UNIMPLEMENTED - `v`, but applies `o` between cell elements? |
 
 ### Operators
 

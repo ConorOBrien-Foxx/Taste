@@ -35,8 +35,8 @@ atomToString atom =
       ) ++ "]"
     
     -- TODO: better function representation?
-    TypeFunction _ ->
-      "{ ... }"
+    TypeFunction fn ->
+      "{ " ++ String.join " " (List.map Types.leafToString fn) ++ " }"
     
     Error s ->
       "Error: " ++ s

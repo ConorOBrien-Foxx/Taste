@@ -28,20 +28,24 @@ clusters = [
 codes = [
   # sum of divisors (7.125b)
   "iNZ+1r/{z%y=0*y+x",
-  # sum of list (2.75b)
-  "iLN/{x+y",
+  # sum of list (2.5b)
+  "iLN/o+",
   # fibonacci (Nth) (5.5b)
   "iN*{y+(zY)Z};z",
   # n * n reversed (3.75b)
   "iNZcSrcN*z",
-  # factorial
-  
+  # factorial (5b)
+  "iNr+{x+1}/o*",
 ]
 unused = [
   # fibonacci (list of first N) (4.125b)
   "iN*{y+(zY)Z",
   # fibonacci (Nth) (5.875b)
   "iN*{y+(zY)Z}/{y",
+  # sum of list (2.75b)
+  "iLN/{x+y",
+  # factorial (5.25b)
+  "iNr+{x+1}/{x*y"
 ]
 
 total_code = {}

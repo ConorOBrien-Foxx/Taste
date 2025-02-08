@@ -176,9 +176,9 @@ dataTree =
               --111100
               Tree (
                 --1111000
-                Leaf (DataLeaf Operator),
+                Leaf (DataLeaf OperatorSignal),
                 --1111001
-                Leaf (DataLeaf VectorOperator)
+                Leaf (DataLeaf VectorOperatorSignal)
               ),
               --111101
               Tree (

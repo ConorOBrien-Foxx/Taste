@@ -26,9 +26,9 @@ getInstruction op =
     "z" -> DataLeaf RegZ
     "{" -> DataLeaf Function
     "(" -> DataLeaf Context
-    "o" -> DataLeaf Operator
+    "o" -> DataLeaf OperatorSignal
     -- TODO: this probably shouldn't be here (rather, should be operator forms)
-    "v" -> DataLeaf VectorOperator
+    "v" -> DataLeaf VectorOperatorSignal
     "Y" -> OpLeaf SaveY
     "Z" -> OpLeaf SaveZ
     "r" -> OpLeaf Range

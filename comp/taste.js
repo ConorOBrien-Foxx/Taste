@@ -5273,7 +5273,7 @@ var $author$project$CodeTree$Leaf = function (a) {
 	return {$: 'Leaf', a: a};
 };
 var $author$project$Types$One = {$: 'One'};
-var $author$project$Types$Operator = {$: 'Operator'};
+var $author$project$Types$OperatorSignal = {$: 'OperatorSignal'};
 var $author$project$Types$RegX = {$: 'RegX'};
 var $author$project$Types$RegY = {$: 'RegY'};
 var $author$project$Types$RegZ = {$: 'RegZ'};
@@ -5283,7 +5283,7 @@ var $author$project$CodeTree$Tree = function (a) {
 	return {$: 'Tree', a: a};
 };
 var $author$project$Types$Two = {$: 'Two'};
-var $author$project$Types$VectorOperator = {$: 'VectorOperator'};
+var $author$project$Types$VectorOperatorSignal = {$: 'VectorOperatorSignal'};
 var $author$project$Types$Zero = {$: 'Zero'};
 var $author$project$CodeTree$dataTree = $author$project$CodeTree$Tree(
 	_Utils_Tuple2(
@@ -5328,9 +5328,9 @@ var $author$project$CodeTree$dataTree = $author$project$CodeTree$Tree(
 												$author$project$CodeTree$Tree(
 													_Utils_Tuple2(
 														$author$project$CodeTree$Leaf(
-															$author$project$Types$DataLeaf($author$project$Types$Operator)),
+															$author$project$Types$DataLeaf($author$project$Types$OperatorSignal)),
 														$author$project$CodeTree$Leaf(
-															$author$project$Types$DataLeaf($author$project$Types$VectorOperator)))),
+															$author$project$Types$DataLeaf($author$project$Types$VectorOperatorSignal)))),
 												$author$project$CodeTree$Tree(
 													_Utils_Tuple2(
 														$author$project$CodeTree$Leaf(
@@ -5507,6 +5507,103 @@ var $author$project$Evaluate$Evaluation = function (a) {
 	return {$: 'Evaluation', a: a};
 };
 var $elm$core$String$fromFloat = _String_fromNumber;
+var $author$project$Types$leafToString = function (leaf) {
+	switch (leaf.$) {
+		case 'DataLeaf':
+			var data = leaf.a;
+			switch (data.$) {
+				case 'Zero':
+					return '0';
+				case 'One':
+					return '1';
+				case 'Two':
+					return '2';
+				case 'Three':
+					return '3';
+				case 'Four':
+					return '4';
+				case 'Five':
+					return '5';
+				case 'Ten':
+					return '10';
+				case 'RegX':
+					return 'x';
+				case 'RegY':
+					return 'y';
+				case 'RegZ':
+					return 'z';
+				case 'Function':
+					return '{';
+				case 'Context':
+					return '(';
+				case 'OperatorSignal':
+					return 'o?';
+				case 'Operator':
+					var op = data.a;
+					return 'o' + $author$project$Types$leafToString(
+						$author$project$Types$OpLeaf(op));
+				case 'VectorOperatorSignal':
+					return 'v?';
+				case 'VectorOperator':
+					var op = data.a;
+					return 'v' + $author$project$Types$leafToString(
+						$author$project$Types$OpLeaf(op));
+				case 'Input':
+					return 'i?';
+				default:
+					return '(UnknownData)';
+			}
+		case 'OpLeaf':
+			var op = leaf.a;
+			switch (op.$) {
+				case 'Add':
+					return '+';
+				case 'Subtract':
+					return '-';
+				case 'Multiply':
+					return '*';
+				case 'Divide':
+					return '/';
+				case 'Modulo':
+					return '%';
+				case 'Range':
+					return 'r';
+				case 'Equality':
+					return '=';
+				case 'Terminate':
+					return '}';
+				case 'SaveY':
+					return 'Y';
+				case 'SaveZ':
+					return 'Z';
+				case 'Separator':
+					return ';';
+				case 'Cast':
+					return 'c';
+				case 'BaseOperation':
+					return '(BaseOperation)';
+				default:
+					return '(UnknownOp)';
+			}
+		default:
+			var typ = leaf.a;
+			switch (typ.$) {
+				case 'TasteNumeric':
+					return 'N';
+				case 'TasteFunction':
+					return 'F';
+				case 'TasteBoolean':
+					return 'B';
+				case 'TasteString':
+					return 'S';
+				case 'TasteListSignal':
+					return 'L';
+				default:
+					return 'L[' + ($author$project$Types$leafToString(
+						$author$project$Types$TypeLeaf(typ)) + ']');
+			}
+	}
+};
 var $author$project$Atom$atomToString = function (atom) {
 	switch (atom.$) {
 		case 'TypeInteger':
@@ -5528,11 +5625,18 @@ var $author$project$Atom$atomToString = function (atom) {
 				' ',
 				A2($elm$core$List$map, $author$project$Atom$atomToString, l)) + ']');
 		case 'TypeFunction':
-			return '{ ... }';
+			var fn = atom.a;
+			return '{ ' + (A2(
+				$elm$core$String$join,
+				' ',
+				A2($elm$core$List$map, $author$project$Types$leafToString, fn)) + ' }');
 		default:
 			var s = atom.a;
 			return 'Error: ' + s;
 	}
+};
+var $author$project$Types$Operator = function (a) {
+	return {$: 'Operator', a: a};
 };
 var $author$project$Types$TasteList = function (a) {
 	return {$: 'TasteList', a: a};
@@ -5719,6 +5823,10 @@ var $author$project$Decode$getDataType = F2(
 				return $author$project$Types$TasteFunction;
 			case 'Context':
 				return $author$project$Types$TasteNumeric;
+			case 'OperatorSignal':
+				return $author$project$Types$TasteFunction;
+			case 'VectorOperatorSignal':
+				return $author$project$Types$TasteFunction;
 			case 'Operator':
 				return $author$project$Types$TasteFunction;
 			case 'VectorOperator':
@@ -5776,7 +5884,7 @@ var $author$project$Decode$isDone = F2(
 var $author$project$Types$BaseOperation = {$: 'BaseOperation'};
 var $author$project$Decode$newParseState = F2(
 	function (tree, bits) {
-		return {argList: _List_Nil, bits: bits, op: $author$project$Types$BaseOperation, result: _List_Nil, target: tree, typeStack: _List_Nil};
+		return {argList: _List_Nil, bits: bits, endOnFirst: false, op: $author$project$Types$BaseOperation, result: _List_Nil, target: tree, typeStack: _List_Nil};
 	});
 var $author$project$Decode$returnType = F2(
 	function (op, types) {
@@ -5810,6 +5918,139 @@ var $author$project$Decode$returnType = F2(
 			}
 		}
 		return $author$project$Types$TasteNumeric;
+	});
+var $author$project$Decode$decodeLeaf = F2(
+	function (state, leaf) {
+		var augmented = function () {
+			var _v7 = A2($author$project$Util$debug, 'leaf', leaf);
+			switch (_v7.$) {
+				case 'TypeLeaf':
+					return state;
+				case 'OpLeaf':
+					var op = _v7.a;
+					return _Utils_update(
+						state,
+						{op: op});
+				default:
+					var td = _v7.a;
+					return _Utils_update(
+						state,
+						{
+							argList: _Utils_ap(
+								state.argList,
+								_List_fromArray(
+									[
+										A2($author$project$Decode$getDataType, state, td)
+									]))
+						});
+			}
+		}();
+		var nextState = A2(
+			$author$project$Decode$isDone,
+			augmented.op,
+			A2($author$project$Util$debug, '-- arg list --', augmented.argList)) ? _Utils_update(
+			augmented,
+			{
+				argList: _List_fromArray(
+					[
+						A2($author$project$Decode$returnType, augmented.op, augmented.argList)
+					]),
+				target: $author$project$CodeTree$opTree,
+				typeStack: _List_Nil
+			}) : _Utils_update(
+			augmented,
+			{target: $author$project$CodeTree$dataTree});
+		if (_Utils_eq(
+			leaf,
+			$author$project$Types$DataLeaf($author$project$Types$Function)) || _Utils_eq(
+			leaf,
+			$author$project$Types$DataLeaf($author$project$Types$Context))) {
+			var subStep = function () {
+				var _v5 = A2($author$project$Util$debug, 'before function sub-step', 0);
+				return A2(
+					$author$project$Util$debug,
+					'function sub-step!!!!',
+					$author$project$Decode$decodeStep(
+						A2($author$project$Decode$newParseState, $author$project$CodeTree$dataTree, state.bits)));
+			}();
+			return _Utils_update(
+				nextState,
+				{
+					bits: subStep.bits,
+					result: _Utils_ap(
+						nextState.result,
+						A2(
+							$elm$core$List$cons,
+							leaf,
+							_Utils_ap(
+								subStep.result,
+								_List_fromArray(
+									[
+										$author$project$Types$OpLeaf($author$project$Types$Terminate)
+									]))))
+				});
+		} else {
+			if (_Utils_eq(
+				leaf,
+				$author$project$Types$DataLeaf($author$project$Types$Input)) || _Utils_eq(
+				leaf,
+				$author$project$Types$OpLeaf($author$project$Types$Cast))) {
+				var subStep = $author$project$Decode$decodeStep(
+					A2($author$project$Decode$newParseState, $author$project$CodeTree$typeTree, state.bits));
+				return _Utils_update(
+					nextState,
+					{
+						argList: _Utils_ap(
+							A2($author$project$Util$dropLast, 1, nextState.argList),
+							A2(
+								$elm$core$List$filterMap,
+								function (x) {
+									if (x.$ === 'TypeLeaf') {
+										var tasteType = x.a;
+										return $elm$core$Maybe$Just(tasteType);
+									} else {
+										return $elm$core$Maybe$Nothing;
+									}
+								},
+								subStep.result)),
+						bits: subStep.bits,
+						result: _Utils_ap(
+							nextState.result,
+							A2($elm$core$List$cons, leaf, subStep.result))
+					});
+			} else {
+				if (_Utils_eq(
+					leaf,
+					$author$project$Types$DataLeaf($author$project$Types$OperatorSignal))) {
+					var subState = A2($author$project$Decode$newParseState, $author$project$CodeTree$opTree, state.bits);
+					var subStep = $author$project$Decode$decodeStep(
+						_Utils_update(
+							subState,
+							{endOnFirst: true}));
+					return _Utils_update(
+						nextState,
+						{
+							bits: subStep.bits,
+							result: _Utils_ap(
+								nextState.result,
+								_List_fromArray(
+									[
+										$author$project$Types$DataLeaf(
+										$author$project$Types$Operator(subStep.op))
+									]))
+						});
+				} else {
+					return _Utils_update(
+						nextState,
+						{
+							result: _Utils_ap(
+								nextState.result,
+								_List_fromArray(
+									[leaf]))
+						});
+				}
+			}
+		}
 	});
 var $author$project$Decode$decodeStep = function (state) {
 	decodeStep:
@@ -5892,118 +6133,14 @@ var $author$project$Decode$decodeStep = function (state) {
 			}
 		}
 		var leaf = _v0.a;
-		var augmented = function () {
-			var _v7 = A2($author$project$Util$debug, 'leaf', leaf);
-			switch (_v7.$) {
-				case 'TypeLeaf':
-					return state;
-				case 'OpLeaf':
-					var op = _v7.a;
-					return _Utils_update(
-						state,
-						{op: op});
-				default:
-					var td = _v7.a;
-					return _Utils_update(
-						state,
-						{
-							argList: _Utils_ap(
-								state.argList,
-								_List_fromArray(
-									[
-										A2($author$project$Decode$getDataType, state, td)
-									]))
-						});
-			}
-		}();
-		var nextState = A2(
-			$author$project$Decode$isDone,
-			augmented.op,
-			A2($author$project$Util$debug, '-- arg list --', augmented.argList)) ? _Utils_update(
-			augmented,
-			{
-				argList: _List_fromArray(
-					[
-						A2($author$project$Decode$returnType, augmented.op, augmented.argList)
-					]),
-				target: $author$project$CodeTree$opTree,
-				typeStack: _List_Nil
-			}) : _Utils_update(
-			augmented,
-			{target: $author$project$CodeTree$dataTree});
-		var $temp$state = function () {
-			if (_Utils_eq(
-				leaf,
-				$author$project$Types$DataLeaf($author$project$Types$Function)) || _Utils_eq(
-				leaf,
-				$author$project$Types$DataLeaf($author$project$Types$Context))) {
-				var subStep = function () {
-					var _v5 = A2($author$project$Util$debug, 'before function sub-step', 0);
-					return A2(
-						$author$project$Util$debug,
-						'function sub-step!!!!',
-						$author$project$Decode$decodeStep(
-							A2($author$project$Decode$newParseState, $author$project$CodeTree$dataTree, state.bits)));
-				}();
-				return _Utils_update(
-					nextState,
-					{
-						bits: subStep.bits,
-						result: _Utils_ap(
-							nextState.result,
-							A2(
-								$elm$core$List$cons,
-								leaf,
-								_Utils_ap(
-									subStep.result,
-									_List_fromArray(
-										[
-											$author$project$Types$OpLeaf($author$project$Types$Terminate)
-										]))))
-					});
-			} else {
-				if (_Utils_eq(
-					leaf,
-					$author$project$Types$DataLeaf($author$project$Types$Input)) || _Utils_eq(
-					leaf,
-					$author$project$Types$OpLeaf($author$project$Types$Cast))) {
-					var subStep = $author$project$Decode$decodeStep(
-						A2($author$project$Decode$newParseState, $author$project$CodeTree$typeTree, state.bits));
-					return _Utils_update(
-						nextState,
-						{
-							argList: _Utils_ap(
-								A2($author$project$Util$dropLast, 1, nextState.argList),
-								A2(
-									$elm$core$List$filterMap,
-									function (x) {
-										if (x.$ === 'TypeLeaf') {
-											var tasteType = x.a;
-											return $elm$core$Maybe$Just(tasteType);
-										} else {
-											return $elm$core$Maybe$Nothing;
-										}
-									},
-									subStep.result)),
-							bits: subStep.bits,
-							result: _Utils_ap(
-								nextState.result,
-								A2($elm$core$List$cons, leaf, subStep.result))
-						});
-				} else {
-					return _Utils_update(
-						nextState,
-						{
-							result: _Utils_ap(
-								nextState.result,
-								_List_fromArray(
-									[leaf]))
-						});
-				}
-			}
-		}();
-		state = $temp$state;
-		continue decodeStep;
+		var decoded = A2($author$project$Decode$decodeLeaf, state, leaf);
+		if (state.endOnFirst) {
+			return decoded;
+		} else {
+			var $temp$state = decoded;
+			state = $temp$state;
+			continue decodeStep;
+		}
 	}
 };
 var $author$project$Decode$decode = function (bits) {
@@ -6436,7 +6573,7 @@ var $author$project$Evaluate$evaluateAt2 = F4(
 	});
 var $author$project$Evaluate$evaluateInstruction = F2(
 	function (state, op) {
-		_v11$22:
+		_v11$23:
 		while (true) {
 			switch (op.$) {
 				case 'TypeLeaf':
@@ -6550,8 +6687,24 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 									input: nextInput,
 									stack: A2($elm$core$List$cons, element, state.stack)
 								});
+						case 'Operator':
+							var innerOp = op.a.a;
+							return _Utils_update(
+								state,
+								{
+									stack: A2(
+										$elm$core$List$cons,
+										$author$project$Atom$TypeFunction(
+											_List_fromArray(
+												[
+													$author$project$Types$DataLeaf($author$project$Types$RegX),
+													$author$project$Types$DataLeaf($author$project$Types$RegY),
+													$author$project$Types$OpLeaf(innerOp)
+												])),
+										state.stack)
+								});
 						default:
-							break _v11$22;
+							break _v11$23;
 					}
 				default:
 					switch (op.a.$) {
@@ -7175,7 +7328,7 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 									}()
 								});
 						default:
-							break _v11$22;
+							break _v11$23;
 					}
 			}
 		}
@@ -7602,8 +7755,8 @@ var $author$project$Evaluate$handleInstructions = F2(
 			A2(
 				$elm$core$Basics$composeL,
 				$author$project$CodeTree$invertInstruction,
-				function (token) {
-					return token.ins;
+				function ($) {
+					return $.ins;
 				}),
 			tokens);
 		if (_v0.$ === 'Coalesced') {
@@ -7659,9 +7812,9 @@ var $author$project$Literate$getInstruction = function (op) {
 		case '(':
 			return $author$project$Types$DataLeaf($author$project$Types$Context);
 		case 'o':
-			return $author$project$Types$DataLeaf($author$project$Types$Operator);
+			return $author$project$Types$DataLeaf($author$project$Types$OperatorSignal);
 		case 'v':
-			return $author$project$Types$DataLeaf($author$project$Types$VectorOperator);
+			return $author$project$Types$DataLeaf($author$project$Types$VectorOperatorSignal);
 		case 'Y':
 			return $author$project$Types$OpLeaf($author$project$Types$SaveY);
 		case 'Z':

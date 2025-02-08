@@ -132,6 +132,7 @@ readBalanced =
     transformDepth
     1 -- initial depth
 
+-- TODO: terminate execution early on error?
 evaluateStep : List InstructionLeaf -> TasteState -> TasteState
 evaluateStep ops state =
   case ops of
@@ -264,6 +265,10 @@ evaluateInstruction state op =
       { nextState
       | input = nextInput
       , stack = element :: state.stack
+      }
+    DataLeaf (Operator innerOp) ->
+      { state
+      | stack = TypeFunction [ DataLeaf RegX, DataLeaf RegY, OpLeaf innerOp ] :: state.stack
       }
     OpLeaf Cast ->
       let
@@ -446,7 +451,7 @@ showCodeResult input bits =
 
 handleInstructions : (String) -> (List Token) -> EvaluationResult
 handleInstructions input tokens =
-  case Util.coalesceMap (CodeTree.invertInstruction << (\token -> token.ins)) tokens of
+  case Util.coalesceMap (CodeTree.invertInstruction << .ins) tokens of
     Util.Coalesced bitRepresentations ->
       showCodeResult input bitRepresentations
     Util.Offenders offenders ->

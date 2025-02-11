@@ -30,6 +30,7 @@ arityOf : TasteOperation -> Int
 arityOf op =
   case op of
     Range -> 1
+    Increment -> 1
     Add -> 2
     Subtract -> 2
     Multiply -> 2

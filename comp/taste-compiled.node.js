@@ -3114,6 +3114,7 @@ var $author$project$Types$Add = {$: 'Add'};
 var $author$project$Types$Cast = {$: 'Cast'};
 var $author$project$Types$Divide = {$: 'Divide'};
 var $author$project$Types$Equality = {$: 'Equality'};
+var $author$project$Types$Increment = {$: 'Increment'};
 var $author$project$Types$Modulo = {$: 'Modulo'};
 var $author$project$Types$Multiply = {$: 'Multiply'};
 var $author$project$Types$OpLeaf = function (a) {
@@ -3158,8 +3159,12 @@ var $author$project$CodeTree$opTree = $author$project$CodeTree$Tree(
 					_Utils_Tuple2(
 						$author$project$CodeTree$Tree(
 							_Utils_Tuple2(
-								$author$project$CodeTree$Leaf(
-									$author$project$Types$OpLeaf($author$project$Types$Modulo)),
+								$author$project$CodeTree$Tree(
+									_Utils_Tuple2(
+										$author$project$CodeTree$Leaf(
+											$author$project$Types$OpLeaf($author$project$Types$Modulo)),
+										$author$project$CodeTree$Leaf(
+											$author$project$Types$OpLeaf($author$project$Types$Increment)))),
 								$author$project$CodeTree$Tree(
 									_Utils_Tuple2(
 										$author$project$CodeTree$Leaf(
@@ -3310,6 +3315,8 @@ var $author$project$Types$leafToString = function (leaf) {
 					return '/';
 				case 'Modulo':
 					return '%';
+				case 'Increment':
+					return '#';
 				case 'Range':
 					return 'r';
 				case 'Equality':
@@ -3592,6 +3599,8 @@ var $author$project$Decode$getDataType = F2(
 var $author$project$Decode$arityOf = function (op) {
 	switch (op.$) {
 		case 'Range':
+			return 1;
+		case 'Increment':
 			return 1;
 		case 'Add':
 			return 2;
@@ -4002,6 +4011,7 @@ var $author$project$Atom$convertTo = F2(
 		return $author$project$Atom$Error(
 			'Cannot perform conversion ' + ($elm$core$Debug$toString(b) + (' -> ' + $elm$core$Debug$toString(a))));
 	});
+var $elm$core$String$length = _String_length;
 var $author$project$Evaluate$mismatchError = F2(
 	function (op, operands) {
 		return $author$project$Atom$Error(
@@ -4027,7 +4037,6 @@ var $author$project$Evaluate$inputError = function (input) {
 		$author$project$Atom$Error('could not parse input'),
 		input);
 };
-var $elm$core$String$length = _String_length;
 var $elm$core$String$slice = _String_slice;
 var $elm$core$String$dropLeft = F2(
 	function (n, string) {
@@ -4396,7 +4405,7 @@ var $author$project$Evaluate$evaluateAt2 = F4(
 	});
 var $author$project$Evaluate$evaluateInstruction = F2(
 	function (state, op) {
-		_v11$25:
+		_v11$26:
 		while (true) {
 			switch (op.$) {
 				case 'TypeLeaf':
@@ -4515,34 +4524,57 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 							return _Utils_update(
 								state,
 								{
-									stack: A2(
-										$elm$core$List$cons,
-										$author$project$Atom$TypeFunction(
-											_List_fromArray(
-												[
-													$author$project$Types$DataLeaf($author$project$Types$RegX),
-													$author$project$Types$DataLeaf($author$project$Types$RegY),
-													$author$project$Types$OpLeaf(innerOp)
-												])),
-										state.stack)
+									stack: function () {
+										var _v25 = $author$project$Decode$arityOf(innerOp);
+										switch (_v25) {
+											case 1:
+												return A2(
+													$elm$core$List$cons,
+													$author$project$Atom$TypeFunction(
+														_List_fromArray(
+															[
+																$author$project$Types$DataLeaf($author$project$Types$RegX),
+																$author$project$Types$OpLeaf(innerOp)
+															])),
+													state.stack);
+											case 2:
+												return A2(
+													$elm$core$List$cons,
+													$author$project$Atom$TypeFunction(
+														_List_fromArray(
+															[
+																$author$project$Types$DataLeaf($author$project$Types$RegX),
+																$author$project$Types$DataLeaf($author$project$Types$RegY),
+																$author$project$Types$OpLeaf(innerOp)
+															])),
+													state.stack);
+											default:
+												var arity = _v25;
+												return A2(
+													$elm$core$List$cons,
+													$author$project$Atom$Error(
+														'Cannot have `o` with operator arity ' + $elm$core$String$fromInt(arity)),
+													state.stack);
+										}
+									}()
 								});
 						default:
-							break _v11$25;
+							break _v11$26;
 					}
 				default:
 					switch (op.a.$) {
 						case 'Cast':
-							var _v25 = op.a;
-							var _v26 = $author$project$Evaluate$popType(state);
-							var tasteType = _v26.a;
-							var nextState = _v26.b;
+							var _v26 = op.a;
+							var _v27 = $author$project$Evaluate$popType(state);
+							var tasteType = _v27.a;
+							var nextState = _v27.b;
 							var finalType = A2($elm$core$Maybe$withDefault, $author$project$Types$TasteNumeric, tasteType);
-							var _v27 = nextState.stack;
-							if (!_v27.b) {
+							var _v28 = nextState.stack;
+							if (!_v28.b) {
 								return nextState;
 							} else {
-								var a = _v27.a;
-								var rest = _v27.b;
+								var a = _v28.a;
+								var rest = _v28.b;
 								return _Utils_update(
 									nextState,
 									{
@@ -4553,42 +4585,42 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 									});
 							}
 						case 'SaveY':
-							var _v28 = op.a;
-							var _v29 = state.stack;
-							if (!_v29.b) {
+							var _v29 = op.a;
+							var _v30 = state.stack;
+							if (!_v30.b) {
 								return state;
 							} else {
-								var a = _v29.a;
+								var a = _v30.a;
 								return _Utils_update(
 									state,
 									{y: a});
 							}
 						case 'SaveZ':
-							var _v30 = op.a;
-							var _v31 = state.stack;
-							if (!_v31.b) {
+							var _v31 = op.a;
+							var _v32 = state.stack;
+							if (!_v32.b) {
 								return state;
 							} else {
-								var a = _v31.a;
+								var a = _v32.a;
 								return _Utils_update(
 									state,
 									{z: a});
 							}
 						case 'Add':
-							var _v32 = op.a;
+							var _v33 = op.a;
 							return $author$project$Evaluate$applyStack(
 								function () {
-									var _v33 = state.stack;
-									_v33$1:
+									var _v34 = state.stack;
+									_v34$1:
 									while (true) {
-										_v33$8:
+										_v34$8:
 										while (true) {
-											if (!_v33.b) {
+											if (!_v34.b) {
 												return _Utils_Tuple2(state, _List_Nil);
 											} else {
-												if (!_v33.b.b) {
-													if (_v33.a.$ === 'Error') {
-														break _v33$1;
+												if (!_v34.b.b) {
+													if (_v34.a.$ === 'Error') {
+														break _v34$1;
 													} else {
 														return _Utils_Tuple2(
 															state,
@@ -4598,16 +4630,16 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 																]));
 													}
 												} else {
-													switch (_v33.b.a.$) {
+													switch (_v34.b.a.$) {
 														case 'TypeInteger':
-															switch (_v33.a.$) {
+															switch (_v34.a.$) {
 																case 'Error':
-																	break _v33$1;
+																	break _v34$1;
 																case 'TypeInteger':
-																	var b = _v33.a.a;
-																	var _v34 = _v33.b;
-																	var a = _v34.a.a;
-																	var rest = _v34.b;
+																	var b = _v34.a.a;
+																	var _v35 = _v34.b;
+																	var a = _v35.a.a;
+																	var rest = _v35.b;
 																	return _Utils_Tuple2(
 																		state,
 																		A2(
@@ -4615,17 +4647,17 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 																			$author$project$Atom$TypeInteger(a + b),
 																			rest));
 																default:
-																	break _v33$8;
+																	break _v34$8;
 															}
 														case 'TypeString':
-															switch (_v33.a.$) {
+															switch (_v34.a.$) {
 																case 'Error':
-																	break _v33$1;
+																	break _v34$1;
 																case 'TypeString':
-																	var b = _v33.a.a;
-																	var _v35 = _v33.b;
-																	var a = _v35.a.a;
-																	var rest = _v35.b;
+																	var b = _v34.a.a;
+																	var _v36 = _v34.b;
+																	var a = _v36.a.a;
+																	var rest = _v36.b;
 																	return _Utils_Tuple2(
 																		state,
 																		A2(
@@ -4634,20 +4666,20 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 																				_Utils_ap(a, b)),
 																			rest));
 																default:
-																	break _v33$8;
+																	break _v34$8;
 															}
 														case 'TypeList':
-															switch (_v33.a.$) {
+															switch (_v34.a.$) {
 																case 'Error':
-																	break _v33$1;
+																	break _v34$1;
 																case 'TypeFunction':
-																	var fn = _v33.a.a;
-																	var _v36 = _v33.b;
-																	var v = _v36.a.a;
-																	var rest = _v36.b;
-																	var _v37 = A3($author$project$Evaluate$stateMap, fn, state, v);
-																	var returnState = _v37.a;
-																	var mapped = _v37.b;
+																	var fn = _v34.a.a;
+																	var _v37 = _v34.b;
+																	var v = _v37.a.a;
+																	var rest = _v37.b;
+																	var _v38 = A3($author$project$Evaluate$stateMap, fn, state, v);
+																	var returnState = _v38.a;
+																	var mapped = _v38.b;
 																	return _Utils_Tuple2(
 																		returnState,
 																		A2(
@@ -4655,10 +4687,10 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 																			$author$project$Atom$TypeList(mapped),
 																			rest));
 																case 'TypeList':
-																	var b = _v33.a.a;
-																	var _v38 = _v33.b;
-																	var a = _v38.a.a;
-																	var rest = _v38.b;
+																	var b = _v34.a.a;
+																	var _v39 = _v34.b;
+																	var a = _v39.a.a;
+																	var rest = _v39.b;
 																	return _Utils_Tuple2(
 																		state,
 																		A2(
@@ -4667,10 +4699,10 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 																				_Utils_ap(a, b)),
 																			rest));
 																default:
-																	var any = _v33.a;
-																	var _v39 = _v33.b;
-																	var arr = _v39.a.a;
-																	var rest = _v39.b;
+																	var any = _v34.a;
+																	var _v40 = _v34.b;
+																	var arr = _v40.a.a;
+																	var rest = _v40.b;
 																	return _Utils_Tuple2(
 																		state,
 																		A2(
@@ -4683,19 +4715,19 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 																			rest));
 															}
 														default:
-															if (_v33.a.$ === 'Error') {
-																break _v33$1;
+															if (_v34.a.$ === 'Error') {
+																break _v34$1;
 															} else {
-																break _v33$8;
+																break _v34$8;
 															}
 													}
 												}
 											}
 										}
-										var b = _v33.a;
-										var _v40 = _v33.b;
-										var a = _v40.a;
-										var rest = _v40.b;
+										var b = _v34.a;
+										var _v41 = _v34.b;
+										var a = _v41.a;
+										var rest = _v41.b;
 										return _Utils_Tuple2(
 											state,
 											A2(
@@ -4710,20 +4742,20 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 									return _Utils_Tuple2(state, state.stack);
 								}());
 						case 'Subtract':
-							var _v41 = op.a;
+							var _v42 = op.a;
 							return $author$project$Evaluate$applyStack(
 								function () {
-									var _v42 = state.stack;
-									_v42$1:
+									var _v43 = state.stack;
+									_v43$1:
 									while (true) {
-										_v42$4:
+										_v43$4:
 										while (true) {
-											if (!_v42.b) {
+											if (!_v43.b) {
 												return _Utils_Tuple2(state, _List_Nil);
 											} else {
-												if (!_v42.b.b) {
-													if (_v42.a.$ === 'Error') {
-														break _v42$1;
+												if (!_v43.b.b) {
+													if (_v43.a.$ === 'Error') {
+														break _v43$1;
 													} else {
 														return _Utils_Tuple2(
 															state,
@@ -4733,15 +4765,15 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 																]));
 													}
 												} else {
-													switch (_v42.a.$) {
+													switch (_v43.a.$) {
 														case 'Error':
-															break _v42$1;
+															break _v43$1;
 														case 'TypeInteger':
-															if (_v42.b.a.$ === 'TypeInteger') {
-																var b = _v42.a.a;
-																var _v43 = _v42.b;
-																var a = _v43.a.a;
-																var rest = _v43.b;
+															if (_v43.b.a.$ === 'TypeInteger') {
+																var b = _v43.a.a;
+																var _v44 = _v43.b;
+																var a = _v44.a.a;
+																var rest = _v44.b;
 																return _Utils_Tuple2(
 																	state,
 																	A2(
@@ -4749,18 +4781,18 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 																		$author$project$Atom$TypeInteger(a - b),
 																		rest));
 															} else {
-																break _v42$4;
+																break _v43$4;
 															}
 														default:
-															break _v42$4;
+															break _v43$4;
 													}
 												}
 											}
 										}
-										var b = _v42.a;
-										var _v44 = _v42.b;
-										var a = _v44.a;
-										var rest = _v44.b;
+										var b = _v43.a;
+										var _v45 = _v43.b;
+										var a = _v45.a;
+										var rest = _v45.b;
 										return _Utils_Tuple2(
 											state,
 											A2(
@@ -4775,20 +4807,20 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 									return _Utils_Tuple2(state, state.stack);
 								}());
 						case 'Multiply':
-							var _v45 = op.a;
+							var _v46 = op.a;
 							return $author$project$Evaluate$applyStack(
 								function () {
-									var _v46 = state.stack;
-									_v46$1:
+									var _v47 = state.stack;
+									_v47$1:
 									while (true) {
-										_v46$4:
+										_v47$4:
 										while (true) {
-											if (!_v46.b) {
+											if (!_v47.b) {
 												return _Utils_Tuple2(state, _List_Nil);
 											} else {
-												if (!_v46.b.b) {
-													if (_v46.a.$ === 'Error') {
-														break _v46$1;
+												if (!_v47.b.b) {
+													if (_v47.a.$ === 'Error') {
+														break _v47$1;
 													} else {
 														return _Utils_Tuple2(
 															state,
@@ -4798,24 +4830,24 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 																]));
 													}
 												} else {
-													switch (_v46.a.$) {
+													switch (_v47.a.$) {
 														case 'Error':
-															break _v46$1;
+															break _v47$1;
 														case 'TypeFunction':
-															if (_v46.b.a.$ === 'TypeInteger') {
-																var fn = _v46.a.a;
-																var _v47 = _v46.b;
-																var n = _v47.a.a;
-																var rest = _v47.b;
-																var _v48 = A3(
+															if (_v47.b.a.$ === 'TypeInteger') {
+																var fn = _v47.a.a;
+																var _v48 = _v47.b;
+																var n = _v48.a.a;
+																var rest = _v48.b;
+																var _v49 = A3(
 																	$elm$core$List$foldl,
 																	F2(
-																		function (_v49, _v50) {
-																			var innerState = _v50.a;
-																			var build = _v50.b;
-																			var _v51 = A2($author$project$Evaluate$evaluateToAtom, fn, innerState);
-																			var nextInnerState = _v51.a;
-																			var atom = _v51.b;
+																		function (_v50, _v51) {
+																			var innerState = _v51.a;
+																			var build = _v51.b;
+																			var _v52 = A2($author$project$Evaluate$evaluateToAtom, fn, innerState);
+																			var nextInnerState = _v52.a;
+																			var atom = _v52.b;
 																			return _Utils_Tuple2(
 																				nextInnerState,
 																				_Utils_ap(
@@ -4828,8 +4860,8 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 																		$elm$core$List$map,
 																		$author$project$Atom$TypeInteger,
 																		A2($elm$core$List$range, 1, n)));
-																var returnState = _v48.a;
-																var mapped = _v48.b;
+																var returnState = _v49.a;
+																var mapped = _v49.b;
 																return _Utils_Tuple2(
 																	returnState,
 																	A2(
@@ -4837,57 +4869,57 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 																		$author$project$Atom$TypeList(mapped),
 																		rest));
 															} else {
-																break _v46$4;
+																break _v47$4;
 															}
 														default:
-															break _v46$4;
+															break _v47$4;
 													}
 												}
 											}
 										}
-										var second = _v46.a;
-										var _v52 = _v46.b;
-										var first = _v52.a;
-										var rest = _v52.b;
+										var second = _v47.a;
+										var _v53 = _v47.b;
+										var first = _v53.a;
+										var rest = _v53.b;
 										var value = function () {
-											var _v53 = _Utils_Tuple2(first, second);
-											_v53$4:
+											var _v54 = _Utils_Tuple2(first, second);
+											_v54$4:
 											while (true) {
-												switch (_v53.a.$) {
+												switch (_v54.a.$) {
 													case 'TypeInteger':
-														switch (_v53.b.$) {
+														switch (_v54.b.$) {
 															case 'TypeInteger':
-																var a = _v53.a.a;
-																var b = _v53.b.a;
+																var a = _v54.a.a;
+																var b = _v54.b.a;
 																return $author$project$Atom$TypeInteger(a * b);
 															case 'TypeBoolean':
-																var a = _v53.a.a;
-																var b = _v53.b.a;
+																var a = _v54.a.a;
+																var b = _v54.b.a;
 																return $author$project$Atom$TypeInteger(
 																	b ? a : 0);
 															default:
-																break _v53$4;
+																break _v54$4;
 														}
 													case 'TypeBoolean':
-														switch (_v53.b.$) {
+														switch (_v54.b.$) {
 															case 'TypeInteger':
-																var a = _v53.a.a;
-																var b = _v53.b.a;
+																var a = _v54.a.a;
+																var b = _v54.b.a;
 																return $author$project$Atom$TypeInteger(
 																	a ? b : 0);
 															case 'TypeBoolean':
-																var a = _v53.a.a;
-																var b = _v53.b.a;
+																var a = _v54.a.a;
+																var b = _v54.b.a;
 																return $author$project$Atom$TypeBoolean(a && b);
 															default:
-																break _v53$4;
+																break _v54$4;
 														}
 													default:
-														break _v53$4;
+														break _v54$4;
 												}
 											}
-											var a = _v53.a;
-											var b = _v53.b;
+											var a = _v54.a;
+											var b = _v54.b;
 											return A2(
 												$author$project$Evaluate$mismatchError,
 												'Multiply',
@@ -4901,20 +4933,20 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 									return _Utils_Tuple2(state, state.stack);
 								}());
 						case 'Divide':
-							var _v54 = op.a;
+							var _v55 = op.a;
 							return $author$project$Evaluate$applyStack(
 								function () {
-									var _v55 = state.stack;
-									_v55$1:
+									var _v56 = state.stack;
+									_v56$1:
 									while (true) {
-										_v55$6:
+										_v56$6:
 										while (true) {
-											if (!_v55.b) {
+											if (!_v56.b) {
 												return _Utils_Tuple2(state, _List_Nil);
 											} else {
-												if (!_v55.b.b) {
-													if (_v55.a.$ === 'Error') {
-														break _v55$1;
+												if (!_v56.b.b) {
+													if (_v56.a.$ === 'Error') {
+														break _v56$1;
 													} else {
 														return _Utils_Tuple2(
 															state,
@@ -4924,16 +4956,16 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 																]));
 													}
 												} else {
-													switch (_v55.a.$) {
+													switch (_v56.a.$) {
 														case 'Error':
-															break _v55$1;
+															break _v56$1;
 														case 'TypeInteger':
-															switch (_v55.b.a.$) {
+															switch (_v56.b.a.$) {
 																case 'TypeInteger':
-																	var b = _v55.a.a;
-																	var _v56 = _v55.b;
-																	var a = _v56.a.a;
-																	var rest = _v56.b;
+																	var b = _v56.a.a;
+																	var _v57 = _v56.b;
+																	var a = _v57.a.a;
+																	var rest = _v57.b;
 																	return _Utils_Tuple2(
 																		state,
 																		A2(
@@ -4941,10 +4973,10 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 																			$author$project$Atom$TypeInteger((a / b) | 0),
 																			rest));
 																case 'TypeList':
-																	var n = _v55.a.a;
-																	var _v57 = _v55.b;
-																	var vec = _v57.a.a;
-																	var rest = _v57.b;
+																	var n = _v56.a.a;
+																	var _v58 = _v56.b;
+																	var vec = _v58.a.a;
+																	var rest = _v58.b;
 																	return _Utils_Tuple2(
 																		state,
 																		A2(
@@ -4956,38 +4988,38 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 																					A2($author$project$Util$splitChunk, n, vec))),
 																			rest));
 																default:
-																	break _v55$6;
+																	break _v56$6;
 															}
 														case 'TypeFunction':
-															if (_v55.b.a.$ === 'TypeList') {
-																var fn = _v55.a.a;
-																var _v58 = _v55.b;
-																var vec = _v58.a.a;
-																var rest = _v58.b;
-																var _v59 = A4(
+															if (_v56.b.a.$ === 'TypeList') {
+																var fn = _v56.a.a;
+																var _v59 = _v56.b;
+																var vec = _v59.a.a;
+																var rest = _v59.b;
+																var _v60 = A4(
 																	$author$project$Evaluate$stateFoldl,
 																	fn,
 																	state,
 																	$author$project$Atom$TypeInteger(0),
 																	vec);
-																var returnState = _v59.a;
-																var folded = _v59.b;
+																var returnState = _v60.a;
+																var folded = _v60.b;
 																return _Utils_Tuple2(
 																	returnState,
 																	A2($elm$core$List$cons, folded, rest));
 															} else {
-																break _v55$6;
+																break _v56$6;
 															}
 														default:
-															break _v55$6;
+															break _v56$6;
 													}
 												}
 											}
 										}
-										var b = _v55.a;
-										var _v60 = _v55.b;
-										var a = _v60.a;
-										var rest = _v60.b;
+										var b = _v56.a;
+										var _v61 = _v56.b;
+										var a = _v61.a;
+										var rest = _v61.b;
 										return _Utils_Tuple2(
 											state,
 											A2(
@@ -5002,20 +5034,20 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 									return _Utils_Tuple2(state, state.stack);
 								}());
 						case 'Modulo':
-							var _v61 = op.a;
+							var _v62 = op.a;
 							return $author$project$Evaluate$applyStack(
 								function () {
-									var _v62 = state.stack;
-									_v62$1:
+									var _v63 = state.stack;
+									_v63$1:
 									while (true) {
-										_v62$4:
+										_v63$4:
 										while (true) {
-											if (!_v62.b) {
+											if (!_v63.b) {
 												return _Utils_Tuple2(state, _List_Nil);
 											} else {
-												if (!_v62.b.b) {
-													if (_v62.a.$ === 'Error') {
-														break _v62$1;
+												if (!_v63.b.b) {
+													if (_v63.a.$ === 'Error') {
+														break _v63$1;
 													} else {
 														return _Utils_Tuple2(
 															state,
@@ -5025,15 +5057,15 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 																]));
 													}
 												} else {
-													switch (_v62.a.$) {
+													switch (_v63.a.$) {
 														case 'Error':
-															break _v62$1;
+															break _v63$1;
 														case 'TypeInteger':
-															if (_v62.b.a.$ === 'TypeInteger') {
-																var b = _v62.a.a;
-																var _v63 = _v62.b;
-																var a = _v63.a.a;
-																var rest = _v63.b;
+															if (_v63.b.a.$ === 'TypeInteger') {
+																var b = _v63.a.a;
+																var _v64 = _v63.b;
+																var a = _v64.a.a;
+																var rest = _v64.b;
 																return _Utils_Tuple2(
 																	state,
 																	A2(
@@ -5042,18 +5074,18 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 																			(!b) ? 0 : A2($elm$core$Basics$modBy, b, a)),
 																		rest));
 															} else {
-																break _v62$4;
+																break _v63$4;
 															}
 														default:
-															break _v62$4;
+															break _v63$4;
 													}
 												}
 											}
 										}
-										var b = _v62.a;
-										var _v64 = _v62.b;
-										var a = _v64.a;
-										var rest = _v64.b;
+										var b = _v63.a;
+										var _v65 = _v63.b;
+										var a = _v65.a;
+										var rest = _v65.b;
 										return _Utils_Tuple2(
 											state,
 											A2(
@@ -5068,20 +5100,20 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 									return _Utils_Tuple2(state, state.stack);
 								}());
 						case 'Equality':
-							var _v65 = op.a;
+							var _v66 = op.a;
 							return $author$project$Evaluate$applyStack(
 								function () {
-									var _v66 = state.stack;
-									_v66$1:
+									var _v67 = state.stack;
+									_v67$1:
 									while (true) {
-										_v66$4:
+										_v67$4:
 										while (true) {
-											if (!_v66.b) {
+											if (!_v67.b) {
 												return _Utils_Tuple2(state, _List_Nil);
 											} else {
-												if (!_v66.b.b) {
-													if (_v66.a.$ === 'Error') {
-														break _v66$1;
+												if (!_v67.b.b) {
+													if (_v67.a.$ === 'Error') {
+														break _v67$1;
 													} else {
 														return _Utils_Tuple2(
 															state,
@@ -5091,15 +5123,15 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 																]));
 													}
 												} else {
-													switch (_v66.a.$) {
+													switch (_v67.a.$) {
 														case 'Error':
-															break _v66$1;
+															break _v67$1;
 														case 'TypeInteger':
-															if (_v66.b.a.$ === 'TypeInteger') {
-																var b = _v66.a.a;
-																var _v67 = _v66.b;
-																var a = _v67.a.a;
-																var rest = _v67.b;
+															if (_v67.b.a.$ === 'TypeInteger') {
+																var b = _v67.a.a;
+																var _v68 = _v67.b;
+																var a = _v68.a.a;
+																var rest = _v68.b;
 																return _Utils_Tuple2(
 																	state,
 																	A2(
@@ -5108,18 +5140,18 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 																			_Utils_eq(a, b)),
 																		rest));
 															} else {
-																break _v66$4;
+																break _v67$4;
 															}
 														default:
-															break _v66$4;
+															break _v67$4;
 													}
 												}
 											}
 										}
-										var b = _v66.a;
-										var _v68 = _v66.b;
-										var a = _v68.a;
-										var rest = _v68.b;
+										var b = _v67.a;
+										var _v69 = _v67.b;
+										var a = _v69.a;
+										var rest = _v69.b;
 										return _Utils_Tuple2(
 											state,
 											A2(
@@ -5134,28 +5166,28 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 									return _Utils_Tuple2(state, state.stack);
 								}());
 						case 'Separator':
-							var _v69 = op.a;
+							var _v70 = op.a;
 							return $author$project$Evaluate$applyStack(
 								function () {
-									var _v70 = state.stack;
-									_v70$1:
+									var _v71 = state.stack;
+									_v71$1:
 									while (true) {
-										if (!_v70.b) {
+										if (!_v71.b) {
 											return _Utils_Tuple2(state, _List_Nil);
 										} else {
-											if (!_v70.b.b) {
-												if (_v70.a.$ === 'Error') {
-													break _v70$1;
+											if (!_v71.b.b) {
+												if (_v71.a.$ === 'Error') {
+													break _v71$1;
 												} else {
 													return _Utils_Tuple2(state, state.stack);
 												}
 											} else {
-												if (_v70.a.$ === 'Error') {
-													break _v70$1;
+												if (_v71.a.$ === 'Error') {
+													break _v71$1;
 												} else {
-													var b = _v70.a;
-													var _v71 = _v70.b;
-													var rest = _v71.b;
+													var b = _v71.a;
+													var _v72 = _v71.b;
+													var rest = _v72.b;
 													return _Utils_Tuple2(
 														state,
 														A2($elm$core$List$cons, b, rest));
@@ -5165,22 +5197,73 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 									}
 									return _Utils_Tuple2(state, state.stack);
 								}());
-						case 'Range':
-							var _v72 = op.a;
+						case 'Increment':
+							var _v73 = op.a;
 							return _Utils_update(
 								state,
 								{
 									stack: function () {
-										var _v73 = state.stack;
-										if (!_v73.b) {
+										var _v74 = state.stack;
+										if (!_v74.b) {
 											return _List_Nil;
 										} else {
-											switch (_v73.a.$) {
+											switch (_v74.a.$) {
 												case 'Error':
 													return state.stack;
 												case 'TypeInteger':
-													var a = _v73.a.a;
-													var rest = _v73.b;
+													var a = _v74.a.a;
+													var rest = _v74.b;
+													return A2(
+														$elm$core$List$cons,
+														$author$project$Atom$TypeInteger(a + 1),
+														rest);
+												case 'TypeList':
+													var v = _v74.a.a;
+													var rest = _v74.b;
+													return A2(
+														$elm$core$List$cons,
+														$author$project$Atom$TypeInteger(
+															$elm$core$List$length(v)),
+														rest);
+												case 'TypeString':
+													var s = _v74.a.a;
+													var rest = _v74.b;
+													return A2(
+														$elm$core$List$cons,
+														$author$project$Atom$TypeInteger(
+															$elm$core$String$length(s)),
+														rest);
+												default:
+													var a = _v74.a;
+													var rest = _v74.b;
+													return A2(
+														$elm$core$List$cons,
+														A2(
+															$author$project$Evaluate$mismatchError,
+															'Increment',
+															_List_fromArray(
+																[a])),
+														rest);
+											}
+										}
+									}()
+								});
+						case 'Range':
+							var _v75 = op.a;
+							return _Utils_update(
+								state,
+								{
+									stack: function () {
+										var _v76 = state.stack;
+										if (!_v76.b) {
+											return _List_Nil;
+										} else {
+											switch (_v76.a.$) {
+												case 'Error':
+													return state.stack;
+												case 'TypeInteger':
+													var a = _v76.a.a;
+													var rest = _v76.b;
 													return A2(
 														$elm$core$List$cons,
 														$author$project$Atom$TypeList(
@@ -5190,23 +5273,23 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 																A2($elm$core$List$range, 0, a - 1))),
 														rest);
 												case 'TypeList':
-													var v = _v73.a.a;
-													var rest = _v73.b;
+													var v = _v76.a.a;
+													var rest = _v76.b;
 													return A2(
 														$elm$core$List$cons,
 														$author$project$Atom$TypeList(
 															$elm$core$List$reverse(v)),
 														rest);
 												case 'TypeString':
-													var s = _v73.a.a;
-													var rest = _v73.b;
+													var s = _v76.a.a;
+													var rest = _v76.b;
 													return A2(
 														$elm$core$List$cons,
 														$author$project$Atom$TypeString(
 															$elm$core$String$reverse(s)),
 														rest);
 												default:
-													var rest = _v73.b;
+													var rest = _v76.b;
 													return A2(
 														$elm$core$List$cons,
 														$author$project$Atom$Error('Unrecognized Type (Range)'),
@@ -5216,20 +5299,20 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 									}()
 								});
 						case 'TernaryCondition':
-							var _v74 = op.a;
+							var _v77 = op.a;
 							return $author$project$Evaluate$applyStack(
 								function () {
-									var _v75 = state.stack;
-									_v75$1:
+									var _v78 = state.stack;
+									_v78$1:
 									while (true) {
-										_v75$5:
+										_v78$5:
 										while (true) {
-											if (!_v75.b) {
+											if (!_v78.b) {
 												return _Utils_Tuple2(state, _List_Nil);
 											} else {
-												if (!_v75.b.b) {
-													if (_v75.a.$ === 'Error') {
-														break _v75$1;
+												if (!_v78.b.b) {
+													if (_v78.a.$ === 'Error') {
+														break _v78$1;
 													} else {
 														return _Utils_Tuple2(
 															state,
@@ -5239,11 +5322,11 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 																]));
 													}
 												} else {
-													if (!_v75.b.b.b) {
-														if (_v75.a.$ === 'Error') {
-															break _v75$1;
+													if (!_v78.b.b.b) {
+														if (_v78.a.$ === 'Error') {
+															break _v78$1;
 														} else {
-															var _v76 = _v75.b;
+															var _v79 = _v78.b;
 															return _Utils_Tuple2(
 																state,
 																_List_fromArray(
@@ -5252,19 +5335,19 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 																	]));
 														}
 													} else {
-														switch (_v75.a.$) {
+														switch (_v78.a.$) {
 															case 'Error':
-																break _v75$1;
+																break _v78$1;
 															case 'TypeFunction':
-																if (_v75.b.a.$ === 'TypeFunction') {
-																	var c = _v75.a.a;
-																	var _v77 = _v75.b;
-																	var b = _v77.a.a;
-																	var _v78 = _v77.b;
-																	var a = _v78.a;
-																	var rest = _v78.b;
+																if (_v78.b.a.$ === 'TypeFunction') {
+																	var c = _v78.a.a;
+																	var _v80 = _v78.b;
+																	var b = _v80.a.a;
+																	var _v81 = _v80.b;
+																	var a = _v81.a;
+																	var rest = _v81.b;
 																	var truth = $author$project$Atom$truthiness(a);
-																	var _v79 = function () {
+																	var _v82 = function () {
 																		switch (truth.$) {
 																			case 'TypeBoolean':
 																				if (truth.a) {
@@ -5280,8 +5363,8 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 																					$author$project$Atom$Error('Unexpected truthiness conversion type'));
 																		}
 																	}();
-																	var nextState = _v79.a;
-																	var nextResult = _v79.b;
+																	var nextState = _v82.a;
+																	var nextResult = _v82.b;
 																	return _Utils_Tuple2(
 																		nextState,
 																		function () {
@@ -5293,21 +5376,21 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 																			}
 																		}());
 																} else {
-																	break _v75$5;
+																	break _v78$5;
 																}
 															default:
-																break _v75$5;
+																break _v78$5;
 														}
 													}
 												}
 											}
 										}
-										var c = _v75.a;
-										var _v82 = _v75.b;
-										var b = _v82.a;
-										var _v83 = _v82.b;
-										var a = _v83.a;
-										var rest = _v83.b;
+										var c = _v78.a;
+										var _v85 = _v78.b;
+										var b = _v85.a;
+										var _v86 = _v85.b;
+										var a = _v86.a;
+										var rest = _v86.b;
 										return _Utils_Tuple2(
 											state,
 											A2(
@@ -5322,7 +5405,7 @@ var $author$project$Evaluate$evaluateInstruction = F2(
 									return _Utils_Tuple2(state, state.stack);
 								}());
 						default:
-							break _v11$25;
+							break _v11$26;
 					}
 			}
 		}
@@ -5856,6 +5939,9 @@ var $author$project$Literate$getInstruction = function (op) {
 		case '%':
 			return $elm$core$Maybe$Just(
 				$author$project$Types$OpLeaf($author$project$Types$Modulo));
+		case '#':
+			return $elm$core$Maybe$Just(
+				$author$project$Types$OpLeaf($author$project$Types$Increment));
 		case '=':
 			return $elm$core$Maybe$Just(
 				$author$project$Types$OpLeaf($author$project$Types$Equality));

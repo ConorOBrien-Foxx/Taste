@@ -56,6 +56,15 @@ z
 
 As this language is unstable, the bit representations may not reflect current. (Last updated: 2/8/2025).
 
+### Truthiness
+
+To save on having comparison operations, a value `a` is truthy if (and only if):
+
+ - `int a` or `float af`: `a` is positive (aka `a` is strictly greater than 0)
+ - `bool a`: `a` is `True`
+ - `list a` or `str a`: `a` has at least 1 element (the element can be truthy or falsey, does not matter)
+ - `fn a`: All functions are truthy
+
 ### Data
 
 | Literate | Bit cost | Bit representation | Meaning |
@@ -78,13 +87,22 @@ As this language is unstable, the bit representations may not reflect current. (
 
 ### Operators
 
-Arity includes the initial piece of data; for example, `+` (add) has an Arity of `2`, despite only taking one additional argument.
+Arity includes the initial piece of data; for example, `+` (add) has an Arity of `2`, despite only taking one additional argument. Floating point operations are not currently supported.
 
 | Literate | Bit cost | Bit representation | Arity | Meaning |
 | -------- | -------- | ------------------ | ----- | ------- |
 | `Y` | 3 | `000` | 1 | `any v`: Saves value `v` to the `y` register |
 | `Z` | 3 | `001` | 1 | `any v`: Saves value `v` to the `z` register |
 | `+` | 3 | `010` | 2 | `int a`, `int b`: Integer addition <br/> `str a`, `str b`: String concatenation <br/> `list a`, `fn b`: Map function `b` over each element in `a` <br/> `list a`, `list b`: List concatenation <br/> `list a`, `any b`: Append `b` to the end of `a` |
+| `}` or `)` | 3 | `011` | - | Terminates whatever function or grouped expression is open |
+| `*` | 3 | `100` | 2 | `int a`, `int b`: Integer multiplication <br/> `fn a`, `int b`: Apply function `a` a total of `b` times; e.g., `3*{z+2Z};z` produces `6` <br/> `bool a`, `int b` or `int a`, `bool b`: Returns the integer if the bool is `True`, `0` otherwise <br/> `bool a`, `bool b`: Boolean conjunction/AND |
+| `/` | 4 | `1010` | 2 | `int a`, `int b`: Integer division <br/> `list a`, `int b`: Divide `a` into `b` consecutive sublists <br/> `list a`, `fn b`: Folds (reduces) the elements of `a` using the function `b` (returns `0` if `a` is empty) |
+| `r` | 4 | `1011` | 1 | `int a`: Range from `0` to `a - 1`, inclusive on both ends <br /> `list a` or `str a`: Reverse elements |
+| `%` | 5 | `11001` | 2 | `int a`, `int b`: Integer modulo. Currently not specified which behavior, although `a%0` is currently defined as `0` |
+| `#` | 5 | `11001` | 1 | `int a`: Increment `a` aka `a + 1` <br/> `list a` or `str a`: Number of elements | 
+| `=` | 4 | `1110` | 2 | `int a`, `int b`: Integer equality <br/> Currently not defined on other types |
+| `;` | 4 | `1111` | 2 | `any a`, `any b`: Computes `a` then `b`, and has the value of `b` |
+| `?` | 6 | `110110` | 3 | `any a`, `fn b`, `fn c`: If `a` is [**truthy**](#Truthiness), execute `b`, otherwise `c` (both supplied with register `x` defined to `a`). <br/> **TODO:** Save the value before `=` to use for `x`? `iN0=?{}{}` does not have a useful value of `x` |
 
 ### Types
 

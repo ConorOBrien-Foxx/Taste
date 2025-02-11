@@ -112,7 +112,12 @@ opTree =
         --110
         Tree (
           --1100
-          Leaf (OpLeaf Modulo),
+          Tree (
+            --11000
+            Leaf (OpLeaf Modulo),
+            --11001
+            Leaf (OpLeaf Increment)
+          ),
           --1101
           Tree (
             --11010

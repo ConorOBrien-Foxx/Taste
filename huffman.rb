@@ -20,7 +20,7 @@ clusters = [
   # data
   %w(0 1 2 3 4 5 t i x y z { \( o v),
   # ops
-  %w(Y Z r + - / * % = c } \) ;),
+  %w(Y Z r + - / * % = c } \) ; # ?),
   # types
   %w(N B F S L)
 ]
@@ -34,10 +34,14 @@ codes = [
   "iN*{y+(zY)Z};z",
   # n * n reversed (3.75b)
   "iNZcSrcN*z",
-  # factorial (5b)
-  "iNr+{x+1}/o*",
-  # increment away from zero (4.875b)
-  "iN?{x+1}{x-1"
+  # factorial (4.625b)
+  "iNr+o#/o*",
+  # increment away from zero (4.5b)
+  "iN?o\#{x-1",
+  # exponentiation (5.75b)
+  "iNZ;iN*{y*zY};y",
+  # ultrafactorial aka (n!)^(n!) (11.125b)
+  "iNr+o#/o*Z;1Y*z*{y*zY};y",
 ]
 unused = [
   # fibonacci (list of first N) (4.125b)
@@ -46,8 +50,14 @@ unused = [
   "iN*{y+(zY)Z}/{y",
   # sum of list (2.75b)
   "iLN/{x+y",
+  # factorial (4.75b)
+  "iNr+{x#}/o*",
+  # factorial (5b)
+  "iNr+{x+1}/o*",
   # factorial (5.25b)
-  "iNr+{x+1}/{x*y"
+  "iNr+{x+1}/{x*y",
+  # increment away from zero (4.875b)
+  "iN?{x+1}{x-1",
 ]
 
 total_code = {}
@@ -81,7 +91,7 @@ clusters.each { |symbols|
   p tree
   puts interpret(tree).map { |k,v|
     total_code[k] = v
-    "#{k}\t#{v}"
+    "#{k}\t#{v}\t(#{v.size} bit#{v.size == 1 ? "" : "s"})"
   }
 }
 

@@ -26,6 +26,7 @@ type TasteOperation
   | Multiply
   | Divide
   | Modulo
+  | Increment
   | Range
   | Equality
   | Terminate
@@ -79,6 +80,7 @@ leafToString leaf =
         Multiply -> "*"
         Divide -> "/"
         Modulo -> "%"
+        Increment -> "#"
         Range -> "r"
         Equality -> "="
         Terminate -> "}"

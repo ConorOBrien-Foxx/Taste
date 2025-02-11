@@ -293,7 +293,12 @@ evaluateInstruction state op =
       }
     DataLeaf (Operator innerOp) ->
       { state
-      | stack = TypeFunction [ DataLeaf RegX, DataLeaf RegY, OpLeaf innerOp ] :: state.stack
+      | stack = case arityOf innerOp of
+          1 -> TypeFunction [ DataLeaf RegX, OpLeaf innerOp ] :: state.stack
+          2 -> TypeFunction [ DataLeaf RegX, DataLeaf RegY, OpLeaf innerOp ] :: state.stack
+          -- TODO: 3-arity?
+          -- TODO: overload for invalid arity
+          arity -> Error ("Cannot have `o` with operator arity " ++ String.fromInt arity) :: state.stack
       }
     OpLeaf Cast ->
       let
@@ -306,6 +311,7 @@ evaluateInstruction state op =
           { nextState
           | stack = convertTo finalType a :: rest
           }
+    -- TODO: scoped y/z so their global values do not interact
     OpLeaf SaveY ->
       case state.stack of
         [] -> state
@@ -441,6 +447,19 @@ evaluateInstruction state op =
           (state, state.stack)
         b :: _ :: rest ->
           (state, b :: rest)
+    OpLeaf Increment ->
+      { state
+      | stack = case state.stack of
+        [] -> []
+        Error _ :: _ -> state.stack
+        TypeInteger a :: rest ->
+          TypeInteger (a + 1) :: rest
+        TypeList v :: rest ->
+          TypeInteger (List.length v) :: rest
+        TypeString s :: rest ->
+          TypeInteger (String.length s) :: rest
+        a :: rest -> mismatchError "Increment" [a] :: rest
+      }
     OpLeaf Range ->
       { state
       | stack = case state.stack of
